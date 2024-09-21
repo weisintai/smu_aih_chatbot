@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import ky from "ky";
 import { getAccessToken } from "@/utils/googleAuth";
+import {
+  getOrCreateSessionId,
+  updateSessionActivity,
+} from "@/utils/sessionManagement";
 
 interface RequestData {
   query: string;
@@ -25,7 +29,6 @@ export async function POST(request: NextRequest) {
   const subdomainRegion = process.env.GCLOUD_SUBDOMAIN_REGION;
   const regionId = process.env.GCLOUD_REGION_ID;
   const agentId = process.env.GCLOUD_AGENT_ID;
-  const sessionId = "YOUR_SESSION_ID"; // You might want to generate this dynamically
 
   if (!accessToken || !projectId || !subdomainRegion || !regionId || !agentId) {
     return NextResponse.json(
@@ -33,6 +36,8 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
+
+  const sessionId = getOrCreateSessionId(request);
 
   const url = `https://${subdomainRegion}-dialogflow.googleapis.com/v3/projects/${projectId}/locations/${regionId}/agents/${agentId}/sessions/${sessionId}:detectIntent`;
 
@@ -51,7 +56,10 @@ export async function POST(request: NextRequest) {
       })
       .json();
 
-    return NextResponse.json(response);
+    const nextResponse = NextResponse.json(response);
+    updateSessionActivity(nextResponse, sessionId);
+
+    return nextResponse;
   } catch (error) {
     console.error("Error detecting intent:", error);
     return NextResponse.json(
