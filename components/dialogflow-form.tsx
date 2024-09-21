@@ -1,12 +1,18 @@
 "use client";
 
-import React, { useState, FormEvent, useRef, useEffect } from "react";
+import React, {
+  useState,
+  FormEvent,
+  useRef,
+  useEffect,
+  ElementRef,
+  useCallback,
+} from "react";
 import useDetectIntent from "@/hooks/useDetectIntent";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { ArrowUpIcon } from "lucide-react";
 
 interface Message {
   role: "user" | "assistant";
@@ -21,7 +27,10 @@ const DialogflowForm: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isClient, setIsClient] = useState(false);
   const { mutate, isPending } = useDetectIntent();
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  const scrollRef = useRef<ElementRef<"div">>(null);
+  const fixedElementRef = useRef<ElementRef<"div">>(null);
+  const placeholderRef = useRef<ElementRef<"div">>(null);
 
   // Set isClient to true when component mounts
   useEffect(() => {
@@ -48,6 +57,7 @@ const DialogflowForm: React.FC = () => {
   useEffect(() => {
     if (messages.length > 0) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+      scrollRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
 
@@ -84,65 +94,93 @@ const DialogflowForm: React.FC = () => {
     setInput("");
   };
 
-  useEffect(() => {
-    if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+  const measureHeight = useCallback(() => {
+    if (fixedElementRef.current && placeholderRef.current) {
+      const height = fixedElementRef.current.clientHeight;
+      placeholderRef.current.style.height = `${height}px`;
     }
-  }, [messages]);
+  }, []);
+
+  useEffect(() => {
+    measureHeight();
+
+    const resizeObserver = new ResizeObserver(measureHeight);
+    const currentRef = fixedElementRef.current;
+
+    if (currentRef) {
+      resizeObserver.observe(currentRef);
+    }
+
+    return () => {
+      if (currentRef) {
+        resizeObserver.unobserve(currentRef);
+      }
+    };
+  }, [measureHeight]);
 
   if (!isClient) {
     return <div>Loading...</div>; // Or any loading indicator
   }
 
   return (
-    <Card className="w-full max-w-2xl mx-auto h-[600px] flex flex-col">
-      <CardContent className="flex-grow p-4">
-        <ScrollArea className="h-full pr-4" ref={scrollAreaRef}>
-          {messages.map((message, index) => (
-            <div
-              key={index}
-              className={`flex ${
-                message.role === "user" ? "justify-end" : "justify-start"
-              } mb-4`}
-            >
-              <div
-                className={`flex ${
-                  message.role === "user" ? "flex-row-reverse" : "flex-row"
-                } items-start`}
-              >
-                <Avatar className="w-8 h-8">
-                  <AvatarFallback>
-                    {message.role === "user" ? "U" : "A"}
-                  </AvatarFallback>
-                </Avatar>
-                <div
-                  className={`mx-2 p-3 rounded-lg ${
-                    message.role === "user"
-                      ? "bg-blue-500 text-white"
-                      : "bg-gray-200"
-                  }`}
-                >
+    <div className="grow">
+      <div className="flex flex-col items-start gap-12 pb-10 min-h-[75vh] sm:w-[95%] px-4 pt-4">
+        {messages.map((message, index) => {
+          return (
+            <div key={index} className="flex flex-col items-start gap-4">
+              {message.role === "user" ? (
+                <div className="flex gap-2 items-center">
+                  <Avatar className="w-8 h-8">
+                    <AvatarFallback>
+                      {message.role === "user" ? "U" : "A"}
+                    </AvatarFallback>
+                  </Avatar>
                   {message.content}
                 </div>
-              </div>
+              ) : (
+                <div> {message.content}</div>
+              )}
             </div>
-          ))}
-        </ScrollArea>
-      </CardContent>
-      <CardFooter>
-        <form onSubmit={handleSubmit} className="w-full flex space-x-2">
-          <Textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Type your message here..."
-            className="flex-grow"
-          />
-          <Button type="submit" disabled={isPending}>
-            {isPending ? "Sending..." : "Send"}
-          </Button>
-        </form>
-      </CardFooter>
-    </Card>
+          );
+        })}
+      </div>
+      <div ref={scrollRef}></div>
+      <div ref={placeholderRef}></div>
+      <div
+        className="mt-5 bottom-0 fixed w-full pb-4 pt-1 bg-background"
+        ref={fixedElementRef}
+      >
+        <div className="max-w-2xl w-full mx-auto flex flex-col gap-1.5 bg-background">
+          <form className="relative" onSubmit={handleSubmit}>
+            <Textarea
+              placeholder="Message [botname]..."
+              name="message"
+              id="message"
+              rows={1}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              className="min-h-[48px] rounded-2xl resize-none p-4 border border-neutral-400 shadow-sm pr-16"
+            />
+            <Button
+              type="submit"
+              size="icon"
+              className="absolute w-8 h-8 top-3 right-3"
+              disabled={isPending}
+            >
+              <ArrowUpIcon className="w-4 h-4" />
+              <span className="sr-only">Send</span>
+            </Button>
+          </form>
+          <p className="text-xs font-medium text-center text-neutral-700">
+            [botname] can make mistakes. Consider checking important
+            information.
+          </p>
+          <p className="text-[0.7rem] font-medium text-center text-neutral-500">
+            Chat clears after 30 minutes of inactivity.
+          </p>
+        </div>
+      </div>
+    </div>
   );
 };
 
