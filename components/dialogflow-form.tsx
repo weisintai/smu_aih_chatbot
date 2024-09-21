@@ -6,7 +6,6 @@ import React, {
   useRef,
   useEffect,
   ElementRef,
-  useCallback,
 } from "react";
 import useDetectIntent from "@/hooks/useDetectIntent";
 import { Button } from "@/components/ui/button";
@@ -29,8 +28,6 @@ const DialogflowForm: React.FC = () => {
   const { mutate, isPending } = useDetectIntent();
 
   const scrollRef = useRef<ElementRef<"div">>(null);
-  const fixedElementRef = useRef<ElementRef<"div">>(null);
-  const placeholderRef = useRef<ElementRef<"div">>(null);
 
   // Set isClient to true when component mounts
   useEffect(() => {
@@ -57,7 +54,9 @@ const DialogflowForm: React.FC = () => {
   useEffect(() => {
     if (messages.length > 0) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
-      scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+      scrollRef.current?.scrollIntoView({
+        behavior: "smooth",
+      });
     }
   }, [messages]);
 
@@ -94,30 +93,6 @@ const DialogflowForm: React.FC = () => {
     setInput("");
   };
 
-  const measureHeight = useCallback(() => {
-    if (fixedElementRef.current && placeholderRef.current) {
-      const height = fixedElementRef.current.clientHeight;
-      placeholderRef.current.style.height = `${height}px`;
-    }
-  }, []);
-
-  useEffect(() => {
-    measureHeight();
-
-    const resizeObserver = new ResizeObserver(measureHeight);
-    const currentRef = fixedElementRef.current;
-
-    if (currentRef) {
-      resizeObserver.observe(currentRef);
-    }
-
-    return () => {
-      if (currentRef) {
-        resizeObserver.unobserve(currentRef);
-      }
-    };
-  }, [measureHeight]);
-
   if (!isClient) {
     return <div>Loading...</div>; // Or any loading indicator
   }
@@ -145,11 +120,7 @@ const DialogflowForm: React.FC = () => {
         })}
       </div>
       <div ref={scrollRef}></div>
-      <div ref={placeholderRef}></div>
-      <div
-        className="mt-5 bottom-0 fixed w-full pb-4 pt-1 bg-background"
-        ref={fixedElementRef}
-      >
+      <div className="mt-5 bottom-0 sticky w-full pb-4 pt-1 bg-background">
         <div className="max-w-2xl w-full mx-auto flex flex-col gap-1.5 bg-background">
           <form className="relative" onSubmit={handleSubmit}>
             <Textarea
