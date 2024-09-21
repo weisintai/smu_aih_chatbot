@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 
 const SESSION_COOKIE_NAME = "dialogflow_session_id";
+const SESSION_EXPIRY_COOKIE_NAME = "dialogflow_session_expiry";
 const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes in milliseconds
 
 function generateCompliantSessionId(): string {
@@ -9,35 +10,41 @@ function generateCompliantSessionId(): string {
   return uuidv4();
 }
 
-export function getOrCreateSessionId(request: NextRequest): string {
+export function getOrCreateSessionId(request: NextRequest): {
+  sessionId: string;
+  isNew: boolean;
+} {
   const sessionId = request.cookies.get(SESSION_COOKIE_NAME)?.value;
-  const lastActivity = request.cookies.get("last_activity")?.value;
+  const sessionExpiry = request.cookies.get(SESSION_EXPIRY_COOKIE_NAME)?.value;
 
-  if (sessionId && lastActivity) {
-    const lastActivityTime = new Date(lastActivity).getTime();
-    if (Date.now() - lastActivityTime < INACTIVITY_TIMEOUT) {
-      return sessionId;
+  if (sessionId && sessionExpiry) {
+    const expiryTime = parseInt(sessionExpiry, 10);
+    if (Date.now() < expiryTime) {
+      return { sessionId, isNew: false };
     }
   }
 
-  // Generate a new compliant session ID
-  return generateCompliantSessionId();
+  // Generate a new session ID
+  return { sessionId: generateCompliantSessionId(), isNew: true };
 }
 
-export function updateSessionActivity(
+export function setSessionCookies(
   response: NextResponse,
   sessionId: string
 ): void {
+  const expiryTime = Date.now() + INACTIVITY_TIMEOUT;
+
   response.cookies.set(SESSION_COOKIE_NAME, sessionId, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
-    maxAge: 7 * 24 * 60 * 60, // 1 week
+    maxAge: INACTIVITY_TIMEOUT / 1000, // Convert to seconds
   });
-  response.cookies.set("last_activity", new Date().toISOString(), {
+
+  response.cookies.set(SESSION_EXPIRY_COOKIE_NAME, expiryTime.toString(), {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
-    maxAge: 7 * 24 * 60 * 60, // 1 week
+    maxAge: INACTIVITY_TIMEOUT / 1000,
   });
 }

@@ -3,7 +3,7 @@ import ky from "ky";
 import { getAccessToken } from "@/utils/googleAuth";
 import {
   getOrCreateSessionId,
-  updateSessionActivity,
+  setSessionCookies,
 } from "@/utils/sessionManagement";
 
 interface RequestData {
@@ -23,25 +23,25 @@ export async function POST(request: NextRequest) {
   const body: RequestData = await request.json();
   const { query } = body;
 
-  const accessToken = await getAccessToken();
-
   const projectId = process.env.GCLOUD_PROJECT_ID;
   const subdomainRegion = process.env.GCLOUD_SUBDOMAIN_REGION;
   const regionId = process.env.GCLOUD_REGION_ID;
   const agentId = process.env.GCLOUD_AGENT_ID;
 
-  if (!accessToken || !projectId || !subdomainRegion || !regionId || !agentId) {
+  if (!projectId || !subdomainRegion || !regionId || !agentId) {
     return NextResponse.json(
       { error: "Missing required environment variables" },
       { status: 500 }
     );
   }
 
-  const sessionId = getOrCreateSessionId(request);
-
-  const url = `https://${subdomainRegion}-dialogflow.googleapis.com/v3/projects/${projectId}/locations/${regionId}/agents/${agentId}/sessions/${sessionId}:detectIntent`;
+  const { sessionId } = getOrCreateSessionId(request);
 
   try {
+    const accessToken = await getAccessToken();
+
+    const url = `https://${subdomainRegion}-dialogflow.googleapis.com/v3/projects/${projectId}/locations/${regionId}/agents/${agentId}/sessions/${sessionId}:detectIntent`;
+
     const response: DialogflowResponse = await ky
       .post(url, {
         json: {
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
       .json();
 
     const nextResponse = NextResponse.json(response);
-    updateSessionActivity(nextResponse, sessionId);
+    setSessionCookies(nextResponse, sessionId);
 
     return nextResponse;
   } catch (error) {
