@@ -6,7 +6,6 @@ import React, {
   useRef,
   useEffect,
   ElementRef,
-  useCallback,
 } from "react";
 import useDetectIntent from "@/hooks/useDetectIntent";
 import { Button } from "@/components/ui/button";
@@ -29,44 +28,7 @@ const DialogflowForm: React.FC = () => {
   const { mutate, isPending } = useDetectIntent();
 
   const scrollRef = useRef<ElementRef<"div">>(null);
-  const messagesRef = useRef<ElementRef<"div">>(null);
   const fixedElementRef = useRef<ElementRef<"div">>(null);
-
-  const measureHeight = useCallback(() => {
-    if (fixedElementRef.current && messagesRef.current) {
-      const height = fixedElementRef.current.clientHeight;
-      messagesRef.current.style.height = `calc(100vh - ${height}px - 1.25rem)`;
-    }
-  }, []);
-
-  useEffect(() => {
-    // Initial measurement
-    const initialMeasurement = () => {
-      measureHeight();
-      // Schedule another measurement after a short delay
-      setTimeout(measureHeight, 100);
-    };
-
-    // Use requestAnimationFrame to ensure the DOM has been painted
-    requestAnimationFrame(() => {
-      initialMeasurement();
-    });
-
-    // Set up ResizeObserver for subsequent size changes
-    const resizeObserver = new ResizeObserver(measureHeight);
-    const currentRef = fixedElementRef.current;
-
-    if (currentRef) {
-      resizeObserver.observe(currentRef);
-    }
-
-    // Clean up
-    return () => {
-      if (currentRef) {
-        resizeObserver.unobserve(currentRef);
-      }
-    };
-  }, [measureHeight]);
 
   // Set isClient to true when component mounts
   useEffect(() => {
@@ -137,35 +99,31 @@ const DialogflowForm: React.FC = () => {
   }
 
   return (
-    <div className="grow">
-      <div
-        className="flex flex-col items-start gap-12 pb-10 h-full sm:w-[95%] px-4 pt-4"
-        ref={messagesRef}
-      >
-        {messages.map((message, index) => {
-          return (
-            <div key={index} className="flex flex-col items-start gap-4">
-              {message.role === "user" ? (
-                <div className="flex gap-2 items-center">
-                  <Avatar className="w-8 h-8">
-                    <AvatarFallback>
-                      {message.role === "user" ? "U" : "A"}
-                    </AvatarFallback>
-                  </Avatar>
-                  {message.content}
-                </div>
-              ) : (
-                <div> {message.content}</div>
-              )}
-            </div>
-          );
-        })}
+    <div className="flex flex-col h-screen">
+      <div className="flex-grow overflow-y-auto px-4 pt-4">
+        <div className="flex flex-col items-start gap-12 pb-10 min-h-[75vh] sm:w-[95%]">
+          {messages.map((message, index) => {
+            return (
+              <div key={index} className="flex flex-col items-start gap-4">
+                {message.role === "user" ? (
+                  <div className="flex gap-2 items-center">
+                    <Avatar className="w-8 h-8">
+                      <AvatarFallback>
+                        {message.role === "user" ? "U" : "A"}
+                      </AvatarFallback>
+                    </Avatar>
+                    {message.content}
+                  </div>
+                ) : (
+                  <div> {message.content}</div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        <div ref={scrollRef}></div>
       </div>
-      <div ref={scrollRef}></div>
-      <div
-        className="mt-5 bottom-0 sticky w-full pb-4 pt-1 bg-background"
-        ref={fixedElementRef}
-      >
+      <div className="w-full pb-4 pt-1 bg-background" ref={fixedElementRef}>
         <div className="max-w-2xl w-full mx-auto flex flex-col gap-1.5 bg-background">
           <form className="relative" onSubmit={handleSubmit}>
             <Textarea
