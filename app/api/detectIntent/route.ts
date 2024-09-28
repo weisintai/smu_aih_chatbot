@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import ky from "ky";
-import { getAccessToken } from "@/utils/googleAuth";
+import { SessionsClient } from "@google-cloud/dialogflow-cx";
 import {
   getOrCreateSessionId,
   setSessionCookies,
@@ -10,25 +9,16 @@ interface RequestData {
   query: string;
 }
 
-interface DialogflowResponse {
-  queryResult: {
-    intent: {
-      displayName: string;
-    };
-    fulfillmentText: string;
-  };
-}
-
 export async function POST(request: NextRequest) {
   const body: RequestData = await request.json();
   const { query } = body;
 
   const projectId = process.env.GCLOUD_PROJECT_ID;
-  const subdomainRegion = process.env.GCLOUD_SUBDOMAIN_REGION;
-  const regionId = process.env.GCLOUD_REGION_ID;
+  const locationId = process.env.GCLOUD_REGION_ID;
   const agentId = process.env.GCLOUD_AGENT_ID;
+  const languageCode = "en";
 
-  if (!projectId || !subdomainRegion || !regionId || !agentId) {
+  if (!projectId || !locationId || !agentId) {
     return NextResponse.json(
       { error: "Missing required environment variables" },
       { status: 500 }
@@ -38,25 +28,31 @@ export async function POST(request: NextRequest) {
   const { sessionId } = getOrCreateSessionId(request);
 
   try {
-    const accessToken = await getAccessToken();
+    const sessionClient = new SessionsClient({
+      apiEndpoint: `${process.env.GCLOUD_SUBDOMAIN_REGION}-dialogflow.googleapis.com`,
+    });
 
-    const url = `https://${subdomainRegion}-dialogflow.googleapis.com/v3/projects/${projectId}/locations/${regionId}/agents/${agentId}/sessions/${sessionId}:detectIntent`;
+    const sessionPath = sessionClient.projectLocationAgentSessionPath(
+      projectId,
+      locationId,
+      agentId,
+      sessionId
+    );
 
-    const response: DialogflowResponse = await ky
-      .post(url, {
-        json: {
-          queryInput: { text: { text: query }, languageCode: "en" },
-          queryParams: { timeZone: "Asia/Singapore" },
+    const request = {
+      session: sessionPath,
+      queryInput: {
+        text: {
+          text: query,
         },
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "x-goog-user-project": projectId,
-          "Content-Type": "application/json; charset=utf-8",
-        },
-      })
-      .json();
+        languageCode,
+      },
+    };
+
+    const [response] = await sessionClient.detectIntent(request);
 
     const nextResponse = NextResponse.json(response);
+
     setSessionCookies(nextResponse, sessionId);
 
     return nextResponse;
