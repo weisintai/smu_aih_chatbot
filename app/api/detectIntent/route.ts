@@ -4,6 +4,12 @@ import {
   getOrCreateSessionId,
   setSessionCookies,
 } from "@/utils/sessionManagement";
+import {
+  projectId,
+  locationId,
+  agentId,
+  languageCode,
+} from "@/utils/constants";
 
 interface RequestData {
   query: string;
@@ -12,11 +18,6 @@ interface RequestData {
 export async function POST(request: NextRequest) {
   const body: RequestData = await request.json();
   const { query } = body;
-
-  const projectId = process.env.GCLOUD_PROJECT_ID;
-  const locationId = process.env.GCLOUD_REGION_ID;
-  const agentId = process.env.GCLOUD_AGENT_ID;
-  const languageCode = "en";
 
   if (!projectId || !locationId || !agentId) {
     return NextResponse.json(
