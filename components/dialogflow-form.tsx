@@ -103,7 +103,9 @@ const DialogflowForm: React.FC = () => {
       toast({
         title: "Error",
         description:
-          error.message || "An error occurred while processing your request.",
+          error instanceof Error
+            ? error.message
+            : "An error occurred while processing your request.",
         variant: "destructive",
       });
     }
@@ -147,7 +149,7 @@ const DialogflowForm: React.FC = () => {
             <div className="space-x-2 bg-muted rounded-full p-2">
               <div>
                 {file && (
-                  <div className="flex items-center gap-2 px-14">
+                  <div className="flex items-center gap-2 px-14 pb-2">
                     <div className="overflow-hidden max-w-60">
                       <p className="text-muted-foreground whitespace-nowrap">
                         {file.name}
