@@ -37,3 +37,6 @@ next-env.d.ts
 
 # Google Service Account
 service-account.json
+
+# SSL
+certificates
