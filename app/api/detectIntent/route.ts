@@ -5,10 +5,10 @@ import {
   setSessionCookies,
 } from "@/utils/sessionManagement";
 import {
-  projectId,
-  locationId,
-  agentId,
-  languageCode,
+  PROJECT_ID,
+  LOCATION_ID,
+  AGENT_ID,
+  LANGUAGE_CODE,
 } from "@/utils/constants";
 
 interface RequestData {
@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
   const body: RequestData = await request.json();
   const { query } = body;
 
-  if (!projectId || !locationId || !agentId) {
+  if (!PROJECT_ID || !LOCATION_ID || !AGENT_ID) {
     return NextResponse.json(
       { error: "Missing required environment variables" },
       { status: 500 }
@@ -34,9 +34,9 @@ export async function POST(request: NextRequest) {
     });
 
     const sessionPath = sessionClient.projectLocationAgentSessionPath(
-      projectId,
-      locationId,
-      agentId,
+      PROJECT_ID,
+      LOCATION_ID,
+      AGENT_ID,
       sessionId
     );
 
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
         text: {
           text: query,
         },
-        languageCode,
+        LANGUAGE_CODE,
       },
     };
 
