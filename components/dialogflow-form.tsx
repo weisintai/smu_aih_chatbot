@@ -18,6 +18,7 @@ import { Input } from "./ui/input";
 interface Message {
   role: "user" | "assistant";
   content: string;
+  fileName?: string;
 }
 
 const STORAGE_KEY = "dialogflow_messages";
@@ -72,11 +73,21 @@ const DialogflowForm: React.FC = () => {
     }
   }, [messages]);
 
+  const clearInput = () => {
+    setInput("");
+    fileInputRef.current!.value = "";
+    setFile(null);
+  };
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!input.trim() && !file) return;
 
-    const newMessage: Message = { role: "user", content: input };
+    const newMessage: Message = {
+      role: "user",
+      content: input,
+      fileName: file?.name,
+    };
     setMessages((prev) => [...prev, newMessage]);
 
     try {
@@ -110,8 +121,7 @@ const DialogflowForm: React.FC = () => {
       });
     }
 
-    setInput("");
-    setFile(null);
+    clearInput();
   };
 
   if (!isClient) {
@@ -132,7 +142,19 @@ const DialogflowForm: React.FC = () => {
                         {message.role === "user" ? "U" : "A"}
                       </AvatarFallback>
                     </Avatar>
-                    {message.content}
+                    <div className="flex flex-col gap-2">
+                      {message.fileName && (
+                        <div className="flex items-center gap-2">
+                          <Paperclip className="h-5 w-5" />
+                          <div className="overflow-hidden max-w-60">
+                            <p className="text-muted-foreground whitespace-nowrap">
+                              {message.fileName}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                      {message.content}
+                    </div>
                   </div>
                 ) : (
                   <div> {message.content}</div>
@@ -146,7 +168,7 @@ const DialogflowForm: React.FC = () => {
       <div className="w-full pb-4 pt-1 bg-background" ref={fixedElementRef}>
         <div className="max-w-3xl w-full mx-auto flex flex-col gap-1.5 bg-background">
           <form className="relative" onSubmit={handleSubmit}>
-            <div className="space-x-2 bg-muted rounded-full p-2">
+            <div className="space-x-2 bg-muted rounded-2xl p-2">
               <div>
                 {file && (
                   <div className="flex items-center gap-2 px-14 pb-2">
