@@ -11,7 +11,9 @@ import useDetectIntent from "@/hooks/useDetectIntent";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ArrowUpIcon } from "lucide-react";
+import { ArrowUp, Paperclip } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { Input } from "./ui/input";
 
 interface Message {
   role: "user" | "assistant";
@@ -29,11 +31,18 @@ const DialogflowForm: React.FC = () => {
 
   const scrollRef = useRef<ElementRef<"div">>(null);
   const fixedElementRef = useRef<ElementRef<"div">>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const { toast } = useToast();
 
   // Set isClient to true when component mounts
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  const handleButtonClick = () => {
+    fileInputRef.current?.click();
+  };
 
   // Load messages from localStorage
   useEffect(() => {
@@ -88,7 +97,12 @@ const DialogflowForm: React.FC = () => {
       );
     } catch (error) {
       console.error("Error detecting intent:", error);
-      // Handle error (e.g., show an error message to the user)
+
+      toast({
+        title: "Error",
+        description: "An error occurred while processing your request.",
+        variant: "destructive",
+      });
     }
 
     setInput("");
@@ -124,32 +138,53 @@ const DialogflowForm: React.FC = () => {
         <div ref={scrollRef}></div>
       </div>
       <div className="w-full pb-4 pt-1 bg-background" ref={fixedElementRef}>
-        <div className="max-w-2xl w-full mx-auto flex flex-col gap-1.5 bg-background">
+        <div className="max-w-3xl w-full mx-auto flex flex-col gap-1.5 bg-background">
           <form className="relative" onSubmit={handleSubmit}>
-            <Textarea
-              placeholder="Message [botname]..."
-              name="message"
-              id="message"
-              rows={1}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              className="min-h-[48px] rounded-2xl resize-none p-4 border border-neutral-400 shadow-sm pr-16"
-            />
-            <Button
-              type="submit"
-              size="icon"
-              className="absolute w-8 h-8 top-3 right-3"
-              disabled={isPending}
-            >
-              <ArrowUpIcon className="w-4 h-4" />
-              <span className="sr-only">Send</span>
-            </Button>
+            <div className="flex items-center space-x-2 bg-muted rounded-full p-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="text-muted-foreground hover:text-foreground hover:bg-muted-hover"
+                onClick={handleButtonClick}
+              >
+                <Paperclip className="h-5 w-5" />
+                <span className="sr-only">Attach</span>
+                <Input
+                  type="file"
+                  ref={fileInputRef}
+                  className="sr-only"
+                  id="file-upload"
+                  aria-label="Upload file"
+                  tabIndex={-1}
+                />
+              </Button>
+              <Textarea
+                placeholder="Message [botname]"
+                name="message"
+                rows={1}
+                id="message"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                className="min-h-[3rem] rounded-2xl resize-none p-4 border-none shadow-none"
+              />
+              <Button
+                type="submit"
+                variant="ghost"
+                size="icon"
+                className="text-muted-foreground hover:text-foreground hover:bg-muted-hover"
+                disabled={isPending}
+              >
+                <ArrowUp className="h-5 w-5" />
+                <span className="sr-only">Send</span>
+              </Button>
+            </div>
           </form>
-          <p className="text-xs font-medium text-center text-neutral-700">
+          <p className="text-xs font-medium text-center text-muted-foreground">
             [botname] can make mistakes. Consider checking important
             information.
           </p>
-          <p className="text-[0.7rem] font-medium text-center text-neutral-500">
+          <p className="text-[0.7rem] font-medium text-center text-muted-foreground/80">
             Chat clears after 30 minutes of inactivity.
           </p>
         </div>
