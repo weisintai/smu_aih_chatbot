@@ -120,8 +120,8 @@ const DialogflowForm: React.FC = () => {
             return (
               <div key={index} className="flex flex-col items-start gap-4">
                 {message.role === "user" ? (
-                  <div className="flex gap-2 items-center">
-                    <Avatar className="w-8 h-8">
+                  <div className="flex gap-2 items-center whitespace-pre-wrap">
+                    <Avatar className="w-8 h-8 self-start">
                       <AvatarFallback>
                         {message.role === "user" ? "U" : "A"}
                       </AvatarFallback>
@@ -165,7 +165,21 @@ const DialogflowForm: React.FC = () => {
                 rows={1}
                 id="message"
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
+                onChange={(e) => {
+                  console.log(e.target.value.replace(/\r?\n/g, "<br />"));
+                  setInput(e.target.value);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    fixedElementRef.current?.scrollIntoView({
+                      behavior: "smooth",
+                    });
+                    e.currentTarget.form?.dispatchEvent(
+                      new Event("submit", { cancelable: true, bubbles: true })
+                    );
+                  }
+                }}
                 className="min-h-[3rem] rounded-2xl resize-none p-4 border-none shadow-none"
               />
               <Button
