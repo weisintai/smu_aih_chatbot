@@ -13,11 +13,21 @@ import {
 
 interface RequestData {
   query: string;
+  file?: File;
 }
 
 export async function POST(request: NextRequest) {
-  const body: RequestData = await request.json();
-  const { query } = body;
+  const formData = await request.formData();
+  const body = Object.fromEntries(formData);
+
+  const { query, file } = body as unknown as RequestData;
+
+  console.log("Query:", query);
+  console.log("File:", file);
+
+  if (!query && !file) {
+    return NextResponse.json({ error: "Query is required" }, { status: 400 });
+  }
 
   if (!PROJECT_ID || !LOCATION_ID || !AGENT_ID) {
     return NextResponse.json(

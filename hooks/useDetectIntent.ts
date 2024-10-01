@@ -3,6 +3,7 @@ import ky from "ky";
 
 interface RequestData {
   query: string;
+  file?: File;
 }
 
 interface DialogflowResponse {
@@ -34,9 +35,16 @@ interface DialogflowResponse {
 const detectIntent = async (
   requestData: RequestData
 ): Promise<DialogflowResponse> => {
+  const formData = new FormData();
+  formData.append("query", requestData.query);
+  if (requestData.file) {
+    formData.append("file", requestData.file);
+  }
+
   const response = await ky
-    .post("/api/detectIntent", { json: requestData })
+    .post("/api/detectIntent", { body: formData })
     .json();
+
   return response as DialogflowResponse;
 };
 

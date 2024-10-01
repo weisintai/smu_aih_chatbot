@@ -25,6 +25,8 @@ const SESSION_EXPIRY_KEY = "dialogflow_session_expiry";
 
 const DialogflowForm: React.FC = () => {
   const [input, setInput] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [isClient, setIsClient] = useState(false);
   const { mutate, isPending } = useDetectIntent();
@@ -72,14 +74,14 @@ const DialogflowForm: React.FC = () => {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim() && !file) return;
 
     const newMessage: Message = { role: "user", content: input };
     setMessages((prev) => [...prev, newMessage]);
 
     try {
       mutate(
-        { query: input },
+        { query: input, file: file ?? undefined },
         {
           onSuccess: (response) => {
             // Update session expiry
@@ -106,6 +108,7 @@ const DialogflowForm: React.FC = () => {
     }
 
     setInput("");
+    setFile(null);
   };
 
   if (!isClient) {
@@ -153,6 +156,9 @@ const DialogflowForm: React.FC = () => {
                 <Input
                   type="file"
                   ref={fileInputRef}
+                  onChange={(e) => {
+                    setFile(e.target.files?.[0] || null);
+                  }}
                   className="sr-only"
                   id="file-upload"
                   aria-label="Upload file"
@@ -166,7 +172,6 @@ const DialogflowForm: React.FC = () => {
                 id="message"
                 value={input}
                 onChange={(e) => {
-                  console.log(e.target.value.replace(/\r?\n/g, "<br />"));
                   setInput(e.target.value);
                 }}
                 onKeyDown={(e) => {
