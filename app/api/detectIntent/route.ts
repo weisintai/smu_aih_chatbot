@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
         text: {
           text: query,
         },
-        LANGUAGE_CODE,
+        languageCode: LANGUAGE_CODE,
       },
     };
 
