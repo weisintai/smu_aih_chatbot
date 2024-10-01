@@ -11,7 +11,7 @@ import useDetectIntent from "@/hooks/useDetectIntent";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ArrowUp, Paperclip } from "lucide-react";
+import { ArrowUp, Paperclip, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "./ui/input";
 
@@ -102,7 +102,8 @@ const DialogflowForm: React.FC = () => {
 
       toast({
         title: "Error",
-        description: "An error occurred while processing your request.",
+        description:
+          error.message || "An error occurred while processing your request.",
         variant: "destructive",
       });
     }
@@ -143,60 +144,107 @@ const DialogflowForm: React.FC = () => {
       <div className="w-full pb-4 pt-1 bg-background" ref={fixedElementRef}>
         <div className="max-w-3xl w-full mx-auto flex flex-col gap-1.5 bg-background">
           <form className="relative" onSubmit={handleSubmit}>
-            <div className="flex items-center space-x-2 bg-muted rounded-full p-2">
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="text-muted-foreground hover:text-foreground hover:bg-muted-hover"
-                onClick={handleButtonClick}
-              >
-                <Paperclip className="h-5 w-5" />
-                <span className="sr-only">Attach</span>
-                <Input
-                  type="file"
-                  ref={fileInputRef}
+            <div className="space-x-2 bg-muted rounded-full p-2">
+              <div>
+                {file && (
+                  <div className="flex items-center gap-2 px-14">
+                    <div className="overflow-hidden max-w-60">
+                      <p className="text-muted-foreground whitespace-nowrap">
+                        {file.name}
+                      </p>
+                      <p>{file.type}</p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className=""
+                      onClick={() => {
+                        fileInputRef.current!.value = "";
+                        setFile(null);
+                      }}
+                    >
+                      <X className="h-5 w-5" />
+                      <span className="sr-only">Remove</span>
+                    </Button>
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="text-muted-foreground hover:text-foreground hover:bg-muted-hover"
+                  onClick={handleButtonClick}
+                >
+                  <Paperclip className="h-5 w-5" />
+                  <span className="sr-only">Attach</span>
+                  <Input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={(e) => {
+                      const selectedFile = e.target.files?.[0] || null;
+
+                      if (selectedFile) {
+                        const allowedTypes = [
+                          "image/jpeg",
+                          "image/png",
+                          "application/pdf",
+                        ];
+
+                        if (!allowedTypes.includes(selectedFile.type)) {
+                          toast({
+                            title: "Invalid file type",
+                            description:
+                              "Only JPEG, PNG, and PDF files are allowed.",
+                            variant: "destructive",
+                          });
+                          return;
+                        }
+                      }
+
+                      setFile(selectedFile);
+                    }}
+                    className="sr-only"
+                    id="file-upload"
+                    aria-label="Upload file"
+                    tabIndex={-1}
+                  />
+                </Button>
+                <Textarea
+                  placeholder="Message [botname]"
+                  name="message"
+                  rows={1}
+                  id="message"
+                  value={input}
                   onChange={(e) => {
-                    setFile(e.target.files?.[0] || null);
+                    setInput(e.target.value);
                   }}
-                  className="sr-only"
-                  id="file-upload"
-                  aria-label="Upload file"
-                  tabIndex={-1}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      fixedElementRef.current?.scrollIntoView({
+                        behavior: "smooth",
+                      });
+                      e.currentTarget.form?.dispatchEvent(
+                        new Event("submit", { cancelable: true, bubbles: true })
+                      );
+                    }
+                  }}
+                  className="min-h-[3rem] rounded-2xl resize-none p-4 border-none shadow-none"
                 />
-              </Button>
-              <Textarea
-                placeholder="Message [botname]"
-                name="message"
-                rows={1}
-                id="message"
-                value={input}
-                onChange={(e) => {
-                  setInput(e.target.value);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    fixedElementRef.current?.scrollIntoView({
-                      behavior: "smooth",
-                    });
-                    e.currentTarget.form?.dispatchEvent(
-                      new Event("submit", { cancelable: true, bubbles: true })
-                    );
-                  }
-                }}
-                className="min-h-[3rem] rounded-2xl resize-none p-4 border-none shadow-none"
-              />
-              <Button
-                type="submit"
-                variant="ghost"
-                size="icon"
-                className="text-muted-foreground hover:text-foreground hover:bg-muted-hover"
-                disabled={isPending}
-              >
-                <ArrowUp className="h-5 w-5" />
-                <span className="sr-only">Send</span>
-              </Button>
+                <Button
+                  type="submit"
+                  variant="ghost"
+                  size="icon"
+                  className="text-muted-foreground hover:text-foreground hover:bg-muted-hover"
+                  disabled={isPending}
+                >
+                  <ArrowUp className="h-5 w-5" />
+                  <span className="sr-only">Send</span>
+                </Button>
+              </div>
             </div>
           </form>
           <p className="text-xs font-medium text-center text-muted-foreground">

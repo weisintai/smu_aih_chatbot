@@ -36,8 +36,17 @@ const detectIntent = async (
   requestData: RequestData
 ): Promise<DialogflowResponse> => {
   const formData = new FormData();
+
   formData.append("query", requestData.query);
+
   if (requestData.file) {
+    const allowedTypes = ["image/jpeg", "image/png", "application/pdf"];
+
+    if (!allowedTypes.includes(requestData.file.type)) {
+      throw new Error(
+        "Invalid file type. Only JPEG, PNG, and PDF files are allowed."
+      );
+    }
     formData.append("file", requestData.file);
   }
 
