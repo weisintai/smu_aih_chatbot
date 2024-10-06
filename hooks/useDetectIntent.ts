@@ -65,14 +65,6 @@ const useDetectIntent = (): UseMutationResult<
 > => {
   return useMutation({
     mutationFn: detectIntent,
-    onSuccess: (data) => {
-      // Handle successful response
-      console.log("Intent detected:", data);
-    },
-    onError: (error) => {
-      // Handle error
-      console.error("Error detecting intent:", error);
-    },
   });
 };
 

@@ -90,36 +90,35 @@ const DialogflowForm: React.FC = () => {
     };
     setMessages((prev) => [...prev, newMessage]);
 
-    try {
-      mutate(
-        { query: input, file: file ?? undefined },
-        {
-          onSuccess: (response) => {
-            // Update session expiry
-            const newExpiry = Date.now() + 30 * 60 * 1000; // 30 minutes from now
-            localStorage.setItem(SESSION_EXPIRY_KEY, newExpiry.toString());
+    mutate(
+      { query: input, file: file ?? undefined },
+      {
+        onSuccess: (response) => {
+          // Update session expiry
+          const newExpiry = Date.now() + 30 * 60 * 1000; // 30 minutes from now
+          localStorage.setItem(SESSION_EXPIRY_KEY, newExpiry.toString());
 
-            const assistantMessage =
-              response.queryResult.responseMessages[0]?.text?.text[0] || "";
-            setMessages((prev) => [
-              ...prev,
-              { role: "assistant", content: assistantMessage },
-            ]);
-          },
-        }
-      );
-    } catch (error) {
-      console.error("Error detecting intent:", error);
+          const assistantMessage =
+            response.queryResult.responseMessages[0]?.text?.text[0] || "";
+          setMessages((prev) => [
+            ...prev,
+            { role: "assistant", content: assistantMessage },
+          ]);
+        },
+        onError: (error) => {
+          console.error("Error detecting intent:", error);
 
-      toast({
-        title: "Error",
-        description:
-          error instanceof Error
-            ? error.message
-            : "An error occurred while processing your request.",
-        variant: "destructive",
-      });
-    }
+          toast({
+            title: "Error",
+            description:
+              error instanceof Error
+                ? error.message
+                : "An error occurred while processing your request.",
+            variant: "destructive",
+          });
+        },
+      }
+    );
 
     clearInput();
   };
@@ -206,6 +205,7 @@ const DialogflowForm: React.FC = () => {
                   <span className="sr-only">Attach</span>
                   <Input
                     type="file"
+                    accept="image/png, image/jpeg, application/pdf"
                     ref={fileInputRef}
                     onChange={(e) => {
                       const selectedFile = e.target.files?.[0] || null;
