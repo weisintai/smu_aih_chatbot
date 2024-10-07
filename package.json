@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@google-cloud/dialogflow-cx": "^4.8.0",
+    "@google-cloud/documentai": "^8.10.0",
     "@google-cloud/text-to-speech": "^5.4.0",
     "@google-cloud/translate": "^8.5.0",
     "@google-cloud/vision": "^4.3.2",

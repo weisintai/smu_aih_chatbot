@@ -11,6 +11,9 @@ importers:
       '@google-cloud/dialogflow-cx':
         specifier: ^4.8.0
         version: 4.8.0
+      '@google-cloud/documentai':
+        specifier: ^8.10.0
+        version: 8.10.0
       '@google-cloud/text-to-speech':
         specifier: ^5.4.0
         version: 5.4.0
@@ -172,6 +175,10 @@ packages:
 
   '@google-cloud/dialogflow-cx@4.8.0':
     resolution: {integrity: sha512-puzgNe6xX3xxQ8hnxMKnqmqOFQZcq9o5zUCJvTQLn8Tku4DXIqHiWf5u+E08Ce6+VwGhJBIIZrh3zMg/5II1wQ==}
+    engines: {node: '>=14.0.0'}
+
+  '@google-cloud/documentai@8.10.0':
+    resolution: {integrity: sha512-XCVdwFAPhzqT0M5F3q86CMwS9giD1xpaRo9FmCSrSssUWFnZiPqjgTojZjz0NeTbCDNlIHBRQwuMRvsHRdNsUg==}
     engines: {node: '>=14.0.0'}
 
   '@google-cloud/projectify@4.0.0':
@@ -2531,6 +2538,13 @@ snapshots:
       - supports-color
 
   '@google-cloud/dialogflow-cx@4.8.0':
+    dependencies:
+      google-gax: 4.4.1
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
+
+  '@google-cloud/documentai@8.10.0':
     dependencies:
       google-gax: 4.4.1
     transitivePeerDependencies:

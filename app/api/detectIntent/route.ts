@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { SessionsClient } from "@google-cloud/dialogflow-cx";
 import vision from "@google-cloud/vision";
+import { DocumentProcessorServiceClient } from "@google-cloud/documentai";
 import { fileTypeFromBuffer } from "file-type";
 import {
   getOrCreateSessionId,
@@ -30,9 +31,6 @@ export async function POST(request: NextRequest) {
   const body = Object.fromEntries(formData);
 
   const { query, file } = body as unknown as RequestData;
-
-  console.log("Query:", query);
-  console.log("File:", file);
 
   if (!query && !file) {
     return NextResponse.json({ error: "Query is required" }, { status: 400 });
@@ -80,7 +78,17 @@ export async function POST(request: NextRequest) {
       console.log("Image analysis result:", fileAnalysisResult);
     } else if (fileType.mime === "application/pdf") {
       // Handle PDF file (you might want to use a different method or API for PDFs)
-      console.log("PDF file detected. Implement PDF handling here.");
+
+      const PROCESSOR_ID = "smu-aih-chatbot-pdf-ocr";
+
+      const client = new DocumentProcessorServiceClient();
+      const [result] = await client.processDocument({
+        name: `projects/${PROJECT_ID}/locations/${LOCATION_ID}/processors/${PROCESSOR_ID}`,
+        inlineDocument: {
+          content: buffer.toString("base64"),
+        },
+      });
+      console.log("PDF analysis result:", result);
     }
   }
 
