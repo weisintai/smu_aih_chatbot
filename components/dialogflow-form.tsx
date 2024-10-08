@@ -38,6 +38,7 @@ const DialogflowForm: React.FC = () => {
   const scrollRef = useRef<ElementRef<"div">>(null);
   const fixedElementRef = useRef<ElementRef<"div">>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const messageContainerRef = useRef<ElementRef<"div">>(null);
 
   const { toast } = useToast();
 
@@ -111,7 +112,7 @@ const DialogflowForm: React.FC = () => {
   };
 
   const getNextDelay = (word: string): number => {
-    const baseDelay = 100; // Increased base delay for readability
+    const baseDelay = 30; // Increased base delay for readability
     const variableDelay = Math.random() * 100; // 0-100ms of variable delay
 
     const lastChar = word[word.length - 1];
@@ -123,6 +124,14 @@ const DialogflowForm: React.FC = () => {
       return baseDelay + variableDelay;
     }
   };
+
+  useEffect(() => {
+    if (isStreaming) {
+      messageContainerRef.current?.scrollIntoView({
+        behavior: "smooth",
+      });
+    }
+  });
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -210,7 +219,10 @@ const DialogflowForm: React.FC = () => {
             );
           })}
           {isStreaming && (
-            <div className="flex flex-col items-start gap-4 whitespace-pre-wrap">
+            <div
+              ref={messageContainerRef}
+              className="flex flex-col items-start gap-4 whitespace-pre-wrap"
+            >
               <Markdown>{streamingMessage}</Markdown>
             </div>
           )}
