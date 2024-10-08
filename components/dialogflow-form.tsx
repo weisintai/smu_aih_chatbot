@@ -27,6 +27,8 @@ const SESSION_EXPIRY_KEY = "dialogflow_session_expiry";
 const DialogflowForm: React.FC = () => {
   const [input, setInput] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [streamingMessage, setStreamingMessage] = useState("");
+  const [isStreaming, setIsStreaming] = useState(false);
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [isClient, setIsClient] = useState(false);
@@ -79,6 +81,48 @@ const DialogflowForm: React.FC = () => {
     setFile(null);
   };
 
+  const simulateStreaming = (message: string) => {
+    setIsStreaming(true);
+    const words = message.split(" ");
+    let wordIndex = 0;
+
+    const streamNextWord = () => {
+      if (wordIndex < words.length) {
+        const currentWord = words[wordIndex];
+        setStreamingMessage(
+          (prev) => prev + (wordIndex > 0 ? " " : "") + currentWord
+        );
+        wordIndex++;
+
+        const delay = getNextDelay(currentWord);
+        setTimeout(streamNextWord, delay);
+      } else {
+        setIsStreaming(false);
+        setMessages((prev) => [
+          ...prev,
+          { role: "assistant", content: message },
+        ]);
+        setStreamingMessage("");
+      }
+    };
+
+    streamNextWord();
+  };
+
+  const getNextDelay = (word: string): number => {
+    const baseDelay = 100; // Increased base delay for readability
+    const variableDelay = Math.random() * 100; // 0-100ms of variable delay
+
+    const lastChar = word[word.length - 1];
+    if ([".", "!", "?"].includes(lastChar)) {
+      return baseDelay + variableDelay + 600; // Longer pause after sentences
+    } else if ([",", ";", ":"].includes(lastChar)) {
+      return baseDelay + variableDelay + 300; // Medium pause after clauses
+    } else {
+      return baseDelay + variableDelay;
+    }
+  };
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!input.trim() && !file) return;
@@ -100,10 +144,8 @@ const DialogflowForm: React.FC = () => {
 
           const assistantMessage =
             response.queryResult.responseMessages[0]?.text?.text[0] || "";
-          setMessages((prev) => [
-            ...prev,
-            { role: "assistant", content: assistantMessage },
-          ]);
+
+          simulateStreaming(assistantMessage);
         },
         onError: (error) => {
           console.error("Error detecting intent:", error);
@@ -133,7 +175,10 @@ const DialogflowForm: React.FC = () => {
         <div className="flex flex-col items-start gap-12 pb-10 min-h-[75vh] sm:w-[95%]">
           {messages.map((message, index) => {
             return (
-              <div key={index} className="flex flex-col items-start gap-4">
+              <div
+                key={index}
+                className="flex flex-col items-start gap-4 whitespace-pre-wrap"
+              >
                 {message.role === "user" ? (
                   <div className="flex gap-2 items-center whitespace-pre-wrap">
                     <Avatar className="w-8 h-8 self-start">
@@ -156,11 +201,83 @@ const DialogflowForm: React.FC = () => {
                     </div>
                   </div>
                 ) : (
-                  <div> {message.content}</div>
+                  <div className="flex flex-col items-start gap-4 whitespace-pre-wrap">
+                    {message.content}
+                  </div>
                 )}
               </div>
             );
           })}
+          {isStreaming && (
+            <div className="flex flex-col items-start gap-4 whitespace-pre-wrap">
+              <div>{streamingMessage}</div>
+            </div>
+          )}
+          {isPending && !isStreaming && (
+            <svg
+              className="h-8 w-8 animate-spin text-gray-900 dark:text-gray-50"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M12 4.75V6.25"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M17.1475 6.8525L16.0625 7.9375"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M19.25 12H17.75"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M17.1475 17.1475L16.0625 16.0625"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M12 17.75V19.25"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M6.8525 17.1475L7.9375 16.0625"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M4.75 12H6.25"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M6.8525 6.8525L7.9375 7.9375"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          )}
         </div>
         <div ref={scrollRef}></div>
       </div>
