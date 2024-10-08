@@ -51,6 +51,7 @@ const DialogflowForm: React.FC = () => {
   const fixedElementRef = useRef<ElementRef<"div">>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messageContainerRef = useRef<ElementRef<"div">>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const { toast } = useToast();
 
@@ -58,10 +59,6 @@ const DialogflowForm: React.FC = () => {
   useEffect(() => {
     setIsClient(true);
   }, []);
-
-  const handleButtonClick = () => {
-    fileInputRef.current?.click();
-  };
 
   // Load messages from localStorage
   useEffect(() => {
@@ -168,8 +165,10 @@ const DialogflowForm: React.FC = () => {
           const newExpiry = Date.now() + 30 * 60 * 1000; // 30 minutes from now
           localStorage.setItem(SESSION_EXPIRY_KEY, newExpiry.toString());
 
-          const assistantMessage =
+          let assistantMessage =
             response.queryResult.responseMessages[0]?.text?.text[0] || "";
+
+          assistantMessage = assistantMessage.replace(/\n/gi, "\n &nbsp;");
 
           simulateStreaming(assistantMessage);
         },
@@ -196,6 +195,12 @@ const DialogflowForm: React.FC = () => {
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(SESSION_EXPIRY_KEY);
 
+    toast({
+      title: "Conversation reset",
+      description: "The conversation has been reset.",
+      variant: "default",
+    });
+
     resetSessionCookies();
   };
 
@@ -209,12 +214,9 @@ const DialogflowForm: React.FC = () => {
         <div className="flex flex-col items-start gap-12 pb-10 min-h-[75vh] sm:w-[95%]">
           {messages.map((message, index) => {
             return (
-              <div
-                key={index}
-                className="flex flex-col items-start gap-4 whitespace-pre-wrap"
-              >
+              <div key={index} className="flex flex-col items-start gap-4">
                 {message.role === "user" ? (
-                  <div className="flex gap-2 items-center whitespace-pre-wrap">
+                  <div className="flex gap-2 items-center">
                     <Avatar className="w-8 h-8 self-start">
                       <AvatarFallback>
                         {message.role === "user" ? "U" : "A"}
@@ -236,7 +238,7 @@ const DialogflowForm: React.FC = () => {
                   </div>
                 ) : (
                   <div className="flex flex-col items-start gap-4 whitespace-pre-wrap">
-                    <Markdown>{message.content}</Markdown>
+                    <Markdown className="markdown">{message.content}</Markdown>
                   </div>
                 )}
               </div>
@@ -247,7 +249,7 @@ const DialogflowForm: React.FC = () => {
               ref={messageContainerRef}
               className="flex flex-col items-start gap-4 whitespace-pre-wrap"
             >
-              <Markdown>{streamingMessage}</Markdown>
+              <Markdown className="markdown">{streamingMessage}</Markdown>
             </div>
           )}
           {isPending && !isStreaming && (
@@ -353,7 +355,9 @@ const DialogflowForm: React.FC = () => {
                   variant="ghost"
                   size="icon"
                   className="text-muted-foreground hover:text-foreground hover:bg-muted-hover"
-                  onClick={handleButtonClick}
+                  onClick={() => {
+                    fileInputRef.current?.click();
+                  }}
                 >
                   <Paperclip className="h-5 w-5" />
                   <span className="sr-only">Attach</span>
@@ -392,6 +396,7 @@ const DialogflowForm: React.FC = () => {
                 </Button>
                 <Textarea
                   placeholder="Message [botname]"
+                  ref={textareaRef}
                   name="message"
                   rows={1}
                   id="message"
