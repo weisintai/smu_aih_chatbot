@@ -11,7 +11,7 @@ import useDetectIntent from "@/hooks/useDetectIntent";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ArrowUp, Paperclip, X } from "lucide-react";
+import { ArrowUp, Paperclip, X, Mic } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "../ui/input";
 import Markdown from "react-markdown";
@@ -95,6 +95,7 @@ const DialogflowForm: React.FC = () => {
 
   const simulateStreaming = (message: string) => {
     setIsStreaming(true);
+    setMessages((prev) => [...prev, { role: "assistant", content: message }]);
     const words = message.split(" ");
     let wordIndex = 0;
 
@@ -110,10 +111,6 @@ const DialogflowForm: React.FC = () => {
         setTimeout(streamNextWord, delay);
       } else {
         setIsStreaming(false);
-        setMessages((prev) => [
-          ...prev,
-          { role: "assistant", content: message },
-        ]);
         setStreamingMessage("");
       }
     };
@@ -153,7 +150,6 @@ const DialogflowForm: React.FC = () => {
       fileName: file?.name,
     };
 
-    setMessages((prev) => [...prev, newMessage]);
     scrollRef.current?.scrollIntoView({
       behavior: "smooth",
     });
@@ -169,7 +165,14 @@ const DialogflowForm: React.FC = () => {
           let assistantMessage =
             response.queryResult.responseMessages[0]?.text?.text[0] || "";
 
-          assistantMessage = assistantMessage.replace(/\n/gi, "\n &nbsp;");
+          setMessages((prev) => [...prev, newMessage]);
+
+          assistantMessage = assistantMessage
+            .replace(/\n/g, "  \n") // Replace single newlines with soft line breaks
+            .replace(/\n{3,}/g, "\n\n") // Replace 3 or more newlines with 2
+            .replace(/^\s*\*\s*/gm, "* ") // Clean up unordered list items
+            .replace(/^\s*\d+\.\s*/gm, "$&") // Clean up ordered list items
+            .trim();
 
           simulateStreaming(assistantMessage);
         },
@@ -218,7 +221,7 @@ const DialogflowForm: React.FC = () => {
       <div className="flex-grow overflow-y-auto px-4 pt-4">
         <div className="flex flex-col items-start gap-12 pb-10 min-h-[75vh] sm:w-[95%]">
           {messages.map((message, index) => {
-            return (
+            return index !== messages.length - 1 ? (
               <div key={index} className="flex flex-col items-start gap-4">
                 {message.role === "user" ? (
                   <div className="flex gap-2 items-center">
@@ -247,6 +250,12 @@ const DialogflowForm: React.FC = () => {
                   </div>
                 )}
               </div>
+            ) : (
+              !isStreaming && (
+                <div className="flex flex-col items-start gap-4 whitespace-pre-wrap">
+                  <Markdown className="markdown">{message.content}</Markdown>
+                </div>
+              )
             );
           })}
           {isStreaming && (
@@ -358,16 +367,29 @@ const DialogflowForm: React.FC = () => {
                   }}
                   className="min-h-[3rem] rounded-2xl resize-none p-4 border-none shadow-none"
                 />
-                <Button
-                  type="submit"
-                  variant="ghost"
-                  size="icon"
-                  className="text-muted-foreground hover:text-foreground hover:bg-muted-hover"
-                  disabled={isPending}
-                >
-                  <ArrowUp className="h-5 w-5" />
-                  <span className="sr-only">Send</span>
-                </Button>
+                {input ? (
+                  <Button
+                    type="submit"
+                    variant="ghost"
+                    size="icon"
+                    className="text-muted-foreground hover:text-foreground hover:bg-muted-hover"
+                    disabled={isPending}
+                  >
+                    <ArrowUp className="h-5 w-5" />
+                    <span className="sr-only">Send</span>
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="text-muted-foreground hover:text-foreground hover:bg-muted-hover"
+                    disabled={isPending}
+                  >
+                    <Mic className="h-5 w-5" />
+                    <span className="sr-only">Voice Message</span>
+                  </Button>
+                )}
               </div>
             </div>
           </form>
@@ -378,6 +400,7 @@ const DialogflowForm: React.FC = () => {
           <p className="text-[0.7rem] font-medium text-center text-muted-foreground/80">
             Chat clears after 30 minutes of inactivity.
           </p>
+
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button
