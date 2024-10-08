@@ -27,6 +27,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { LoadingSpinner } from "../loading-spinner";
 
 interface Message {
   role: "user" | "assistant";
@@ -205,7 +206,11 @@ const DialogflowForm: React.FC = () => {
   };
 
   if (!isClient) {
-    return <div>Loading...</div>; // Or any loading indicator
+    return (
+      <div className="w-dvw h-dvh flex justify-center items-center">
+        <LoadingSpinner />
+      </div>
+    ); // Or any loading indicator
   }
 
   return (
@@ -252,71 +257,7 @@ const DialogflowForm: React.FC = () => {
               <Markdown className="markdown">{streamingMessage}</Markdown>
             </div>
           )}
-          {isPending && !isStreaming && (
-            <svg
-              className="h-8 w-8 animate-spin text-gray-900 dark:text-gray-50"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M12 4.75V6.25"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M17.1475 6.8525L16.0625 7.9375"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M19.25 12H17.75"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M17.1475 17.1475L16.0625 16.0625"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M12 17.75V19.25"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M6.8525 17.1475L7.9375 16.0625"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M4.75 12H6.25"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M6.8525 6.8525L7.9375 7.9375"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          )}
+          {(isPending || isStreaming) && <LoadingSpinner />}
         </div>
         <div ref={scrollRef}></div>
       </div>
@@ -439,7 +380,12 @@ const DialogflowForm: React.FC = () => {
           </p>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="sm" className="self-center">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="self-center"
+                disabled={isPending || isStreaming}
+              >
                 Reset conversation
               </Button>
             </AlertDialogTrigger>
