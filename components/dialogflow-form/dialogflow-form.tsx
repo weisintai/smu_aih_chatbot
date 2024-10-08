@@ -16,6 +16,17 @@ import { useToast } from "@/hooks/use-toast";
 import { Input } from "../ui/input";
 import Markdown from "react-markdown";
 import { resetSessionCookies } from "./actions";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface Message {
   role: "user" | "assistant";
@@ -421,14 +432,28 @@ const DialogflowForm: React.FC = () => {
           <p className="text-[0.7rem] font-medium text-center text-muted-foreground/80">
             Chat clears after 30 minutes of inactivity.
           </p>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="self-center"
-            onClick={resetConversation}
-          >
-            Reset conversation
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="ghost" size="sm" className="self-center">
+                Reset conversation
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete
+                  your account and remove your data from our servers.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={resetConversation}>
+                  Continue
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
     </div>
