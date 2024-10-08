@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ArrowUp, Paperclip, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "./ui/input";
+import Markdown from "react-markdown";
 
 interface Message {
   role: "user" | "assistant";
@@ -197,12 +198,12 @@ const DialogflowForm: React.FC = () => {
                           </div>
                         </div>
                       )}
-                      {message.content}
+                      <Markdown>{message.content}</Markdown>
                     </div>
                   </div>
                 ) : (
                   <div className="flex flex-col items-start gap-4 whitespace-pre-wrap">
-                    {message.content}
+                    <Markdown>{message.content}</Markdown>
                   </div>
                 )}
               </div>
@@ -210,7 +211,7 @@ const DialogflowForm: React.FC = () => {
           })}
           {isStreaming && (
             <div className="flex flex-col items-start gap-4 whitespace-pre-wrap">
-              <div>{streamingMessage}</div>
+              <Markdown>{streamingMessage}</Markdown>
             </div>
           )}
           {isPending && !isStreaming && (
