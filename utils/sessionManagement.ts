@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 
-const SESSION_COOKIE_NAME = "dialogflow_session_id";
-const SESSION_EXPIRY_COOKIE_NAME = "dialogflow_session_expiry";
+export const SESSION_COOKIE_NAME = "dialogflow_session_id";
+export const SESSION_EXPIRY_COOKIE_NAME = "dialogflow_session_expiry";
 const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes in milliseconds
 
 function generateCompliantSessionId(): string {

@@ -13,8 +13,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ArrowUp, Paperclip, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Input } from "./ui/input";
+import { Input } from "../ui/input";
 import Markdown from "react-markdown";
+import { resetSessionCookies } from "./actions";
 
 interface Message {
   role: "user" | "assistant";
@@ -142,7 +143,11 @@ const DialogflowForm: React.FC = () => {
       content: input,
       fileName: file?.name,
     };
+
     setMessages((prev) => [...prev, newMessage]);
+    scrollRef.current?.scrollIntoView({
+      behavior: "smooth",
+    });
 
     mutate(
       { query: input, file: file ?? undefined },
@@ -173,6 +178,14 @@ const DialogflowForm: React.FC = () => {
     );
 
     clearInput();
+  };
+
+  const resetConversation = () => {
+    setMessages([]);
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(SESSION_EXPIRY_KEY);
+
+    resetSessionCookies();
   };
 
   if (!isClient) {
@@ -408,6 +421,14 @@ const DialogflowForm: React.FC = () => {
           <p className="text-[0.7rem] font-medium text-center text-muted-foreground/80">
             Chat clears after 30 minutes of inactivity.
           </p>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="self-center"
+            onClick={resetConversation}
+          >
+            Reset conversation
+          </Button>
         </div>
       </div>
     </div>
