@@ -67,7 +67,19 @@
   }
 }
 
-ul {
-  @apply list-disc;
-  @apply list-inside;
+.markdown {
+  ul {
+    @apply list-disc;
+    @apply list-inside;
+  }
+
+  ol {
+    @apply list-decimal;
+    @apply list-inside;
+  }
+
+  ul,
+  ol {
+    @apply leading-none;
+  }
 }
