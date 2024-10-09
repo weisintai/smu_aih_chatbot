@@ -219,10 +219,13 @@ const DialogflowForm: React.FC = () => {
   return (
     <div className="flex flex-col h-screen">
       <div className="flex-grow overflow-y-auto px-4 pt-4">
-        <div className="flex flex-col items-start gap-12 pb-10 min-h-[75vh] sm:w-[95%]">
+        <div className="flex flex-col items-start gap-4 pb-10 min-h-[75vh] sm:w-[95%]">
           {messages.map((message, index) => {
             return index !== messages.length - 1 ? (
-              <div key={index} className="flex flex-col items-start gap-4">
+              <div
+                key={index}
+                className="flex flex-col items-start gap-4 whitespace-pre-wrap markdown"
+              >
                 {message.role === "user" ? (
                   <div className="flex gap-2 items-center">
                     <Avatar className="w-8 h-8 self-start">
@@ -246,14 +249,14 @@ const DialogflowForm: React.FC = () => {
                   </div>
                 ) : (
                   <div className="flex flex-col items-start gap-4 whitespace-pre-wrap">
-                    <Markdown className="markdown">{message.content}</Markdown>
+                    <Markdown>{message.content}</Markdown>
                   </div>
                 )}
               </div>
             ) : (
               !isStreaming && (
-                <div className="flex flex-col items-start gap-4 whitespace-pre-wrap">
-                  <Markdown className="markdown">{message.content}</Markdown>
+                <div className="flex flex-col items-start gap-4 whitespace-pre-wrap markdown">
+                  <Markdown>{message.content}</Markdown>
                 </div>
               )
             );
@@ -261,9 +264,9 @@ const DialogflowForm: React.FC = () => {
           {isStreaming && (
             <div
               ref={messageContainerRef}
-              className="flex flex-col items-start gap-4 whitespace-pre-wrap"
+              className="flex flex-col items-start gap-4 whitespace-pre-wrap markdown"
             >
-              <Markdown className="markdown">{streamingMessage}</Markdown>
+              <Markdown>{streamingMessage}</Markdown>
             </div>
           )}
           {(isPending || isStreaming) && <LoadingSpinner />}
