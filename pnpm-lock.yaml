@@ -14,6 +14,9 @@ importers:
       '@google-cloud/documentai':
         specifier: ^8.10.0
         version: 8.10.0
+      '@google-cloud/language':
+        specifier: ^6.5.0
+        version: 6.5.0
       '@google-cloud/text-to-speech':
         specifier: ^5.4.0
         version: 5.4.0
@@ -185,6 +188,10 @@ packages:
 
   '@google-cloud/documentai@8.10.0':
     resolution: {integrity: sha512-XCVdwFAPhzqT0M5F3q86CMwS9giD1xpaRo9FmCSrSssUWFnZiPqjgTojZjz0NeTbCDNlIHBRQwuMRvsHRdNsUg==}
+    engines: {node: '>=14.0.0'}
+
+  '@google-cloud/language@6.5.0':
+    resolution: {integrity: sha512-/T6B+RL3TbkLRjDkXy4W3vuXxLUzD1Hc3OAzDKi7UXFcMsN8QB3n3KaIfFLYaxTpi3aGFIoXr3vDzr6v72WYig==}
     engines: {node: '>=14.0.0'}
 
   '@google-cloud/projectify@4.0.0':
@@ -2880,6 +2887,13 @@ snapshots:
       - supports-color
 
   '@google-cloud/documentai@8.10.0':
+    dependencies:
+      google-gax: 4.4.1
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
+
+  '@google-cloud/language@6.5.0':
     dependencies:
       google-gax: 4.4.1
     transitivePeerDependencies:
