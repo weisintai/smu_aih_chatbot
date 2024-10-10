@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { SessionsClient } from "@google-cloud/dialogflow-cx";
+import type { protos } from "@google-cloud/dialogflow-cx";
 import vision from "@google-cloud/vision";
 import { DocumentProcessorServiceClient } from "@google-cloud/documentai";
 import { fileTypeFromBuffer } from "file-type";
@@ -30,7 +31,8 @@ export async function POST(request: NextRequest) {
   const formData = await request.formData();
   const body = Object.fromEntries(formData);
 
-  const { query, file } = body as unknown as RequestData;
+  const { file } = body as unknown as RequestData;
+  let { query } = body as unknown as RequestData;
 
   if (!query && !file) {
     return NextResponse.json({ error: "Query is required" }, { status: 400 });
@@ -75,7 +77,15 @@ export async function POST(request: NextRequest) {
           ) || [],
         safeSearch: result.safeSearchAnnotation || {},
       };
+
       console.log("Image analysis result:", fileAnalysisResult);
+
+      query = `**Image Analysis:**
+* **Text:** "The image contains the following text: '${fileAnalysisResult.text
+        .split("\n")
+        .join(" ")}'"
+* **Labels:** "The image is labeled as ${fileAnalysisResult.labels.join(",")}."
+**Based on this information, please answer the query: ${query}"**`;
     } else if (fileType.mime === "application/pdf") {
       // Handle PDF file (you might want to use a different method or API for PDFs)
 
@@ -106,12 +116,15 @@ export async function POST(request: NextRequest) {
       sessionId
     );
 
-    const request = {
+    console.log(query);
+
+    const request: protos.google.cloud.dialogflow.cx.v3.IDetectIntentRequest = {
       session: sessionPath,
       queryInput: {
         text: {
           text: query,
         },
+
         languageCode: LANGUAGE_CODE,
       },
     };
