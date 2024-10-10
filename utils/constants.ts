@@ -1,6 +1,7 @@
-const PROJECT_ID = process.env.GCLOUD_PROJECT_ID;
-const LOCATION_ID = process.env.GCLOUD_REGION_ID;
-const AGENT_ID = process.env.GCLOUD_AGENT_ID;
+const PROJECT_ID = "smu-aih-chatbot-assignment";
+const LOCATION_ID = "us";
+const SUBDOMAIN_REGION = "usa";
+const AGENT_ID = "b3181d72-3a8e-4fd2-8c31-383dd3f612ed";
 const LANGUAGE_CODE = "en";
 
-export { PROJECT_ID, LOCATION_ID, AGENT_ID, LANGUAGE_CODE };
+export { PROJECT_ID, LOCATION_ID, SUBDOMAIN_REGION, AGENT_ID, LANGUAGE_CODE };

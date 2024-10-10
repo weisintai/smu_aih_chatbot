@@ -13,6 +13,7 @@ import {
   LOCATION_ID,
   AGENT_ID,
   LANGUAGE_CODE,
+  SUBDOMAIN_REGION,
 } from "@/utils/constants";
 
 interface RequestData {
@@ -106,7 +107,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const sessionClient = new SessionsClient({
-      apiEndpoint: `${process.env.GCLOUD_SUBDOMAIN_REGION}-dialogflow.googleapis.com`,
+      apiEndpoint: `${SUBDOMAIN_REGION}-dialogflow.googleapis.com`,
     });
 
     const sessionPath = sessionClient.projectLocationAgentSessionPath(
