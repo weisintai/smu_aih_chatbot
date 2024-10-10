@@ -28,6 +28,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { LoadingSpinner } from "../loading-spinner";
+import { TextToSpeechButton } from "../text-to-speech-button";
 
 interface Message {
   role: "user" | "assistant";
@@ -37,6 +38,15 @@ interface Message {
 
 const STORAGE_KEY = "dialogflow_messages";
 const SESSION_EXPIRY_KEY = "dialogflow_session_expiry";
+
+const BotMessage = ({ message }: { message: string }) => {
+  return (
+    <div className="flex flex-col items-start gap-4 whitespace-pre-wrap">
+      <Markdown>{message}</Markdown>
+      <TextToSpeechButton text={message} />
+    </div>
+  );
+};
 
 const DialogflowForm: React.FC = () => {
   const [input, setInput] = useState("");
@@ -219,7 +229,7 @@ const DialogflowForm: React.FC = () => {
   return (
     <div className="flex flex-col h-screen">
       <div className="flex-grow overflow-y-auto px-4 pt-4">
-        <div className="flex flex-col items-start gap-4 pb-10 min-h-[75vh] sm:w-[95%]">
+        <div className="flex flex-col items-start gap-8 pb-10 min-h-[75vh] sm:w-[95%]">
           {messages.map((message, index) => {
             return index !== messages.length - 1 ? (
               <div
@@ -248,17 +258,11 @@ const DialogflowForm: React.FC = () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="flex flex-col items-start gap-4 whitespace-pre-wrap">
-                    <Markdown>{message.content}</Markdown>
-                  </div>
+                  <BotMessage message={message.content} />
                 )}
               </div>
             ) : (
-              !isStreaming && (
-                <div className="flex flex-col items-start gap-4 whitespace-pre-wrap markdown">
-                  <Markdown>{message.content}</Markdown>
-                </div>
-              )
+              !isStreaming && <BotMessage message={message.content} />
             );
           })}
           {isStreaming && (
