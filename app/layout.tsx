@@ -5,6 +5,7 @@ import "./globals.css";
 import ReactQueryProvider from "@/utils/providers/react-query-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
+import WebSocketClientProvider from "@/utils/providers/web-socket-provider";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -50,14 +51,16 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ReactQueryProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            disableTransitionOnChange
-          >
-            {children}
-            <Toaster />
-          </ThemeProvider>
+          <WebSocketClientProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              disableTransitionOnChange
+            >
+              {children}
+              <Toaster />
+            </ThemeProvider>
+          </WebSocketClientProvider>
         </ReactQueryProvider>
       </body>
     </html>

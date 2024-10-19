@@ -374,29 +374,26 @@ const DialogflowForm: React.FC = () => {
                   }}
                   className="min-h-[3rem] rounded-2xl resize-none p-4 border-none shadow-none"
                 />
-                {input ? (
-                  <Button
-                    type="submit"
-                    variant="ghost"
-                    size="icon"
-                    className="text-muted-foreground hover:text-foreground hover:bg-muted-hover"
-                    disabled={isPending}
-                  >
-                    <ArrowUp className="h-5 w-5" />
-                    <span className="sr-only">Send</span>
-                  </Button>
-                ) : (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="text-muted-foreground hover:text-foreground hover:bg-muted-hover"
-                    disabled={isPending}
-                  >
-                    <Mic className="h-5 w-5" />
-                    <span className="sr-only">Voice Message</span>
-                  </Button>
-                )}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="text-muted-foreground hover:text-foreground hover:bg-muted-hover"
+                  disabled={isPending}
+                >
+                  <Mic className="h-5 w-5" />
+                  <span className="sr-only">Voice Message</span>
+                </Button>
+                <Button
+                  type="submit"
+                  variant="ghost"
+                  size="icon"
+                  className="text-muted-foreground hover:text-foreground hover:bg-muted-hover"
+                  disabled={isPending}
+                >
+                  <ArrowUp className="h-5 w-5" />
+                  <span className="sr-only">Send</span>
+                </Button>
               </div>
             </div>
           </form>

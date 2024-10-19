@@ -56,6 +56,13 @@ RUN chown nextjs:nodejs .next
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+# Install next-ws-cli and run the patch command as root
+USER root
+RUN corepack enable pnpm && \
+    pnpm dlx next-ws-cli@latest patch && \
+    chown -R nextjs:nodejs /app
+
+# Switch back to non-root user
 USER nextjs
 
 EXPOSE 3000
