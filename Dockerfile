@@ -27,6 +27,16 @@ COPY . .
 # Uncomment the following line in case you want to disable telemetry during the build.
 # ENV NEXT_TELEMETRY_DISABLED=1
 
+RUN if [ -f yarn.lock ]; then \
+      yarn dlx next-ws-cli@latest patch; \
+    elif [ -f package-lock.json ]; then \
+      npx next-ws-cli@latest patch; \
+    elif [ -f pnpm-lock.yaml ]; then \
+      corepack enable pnpm && pnpm dlx next-ws-cli@latest patch; \
+    else \
+      echo "Lockfile not found." && exit 1; \
+    fi
+
 RUN \
   if [ -f yarn.lock ]; then yarn run build; \
   elif [ -f package-lock.json ]; then npm run build; \
@@ -55,12 +65,6 @@ RUN chown nextjs:nodejs .next
 # https://nextjs.org/docs/advanced-features/output-file-tracing
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-
-# Install next-ws-cli and run the patch command as root
-USER root
-RUN corepack enable pnpm && \
-    pnpm dlx next-ws-cli@latest patch && \
-    chown -R nextjs:nodejs /app
 
 # Switch back to non-root user
 USER nextjs

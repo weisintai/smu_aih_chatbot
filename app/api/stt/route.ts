@@ -1,7 +1,6 @@
 import { WebSocket, WebSocketServer, Data } from "ws";
 import { IncomingMessage } from "node:http";
 import speech, { protos } from "@google-cloud/speech";
-import { SpeechClient } from "@google-cloud/speech/build/src/v1/index";
 
 const speechClient = new speech.SpeechClient();
 
@@ -30,7 +29,7 @@ export function SOCKET(
 ) {
   const { send, broadcast } = createHelpers(client, server);
 
-  let recognizeStream: SpeechClient.StreamingRecognizeStream | null = null;
+  let recognizeStream: any = null;
 
   client.on("message", async (message: Data, isBinary: boolean) => {
     try {
