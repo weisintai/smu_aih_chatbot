@@ -7,9 +7,13 @@ export default function WebSocketClientProvider({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <WebSocketProvider url="ws://localhost:3000/api/stt">
-      {children}
-    </WebSocketProvider>
-  );
+  let wsUrl = "";
+
+  if (typeof window !== "undefined") {
+    wsUrl = `${window?.location.protocol === "https:" ? "wss:" : "ws:"}//${
+      window?.location.host
+    }/api/stt`;
+  }
+
+  return <WebSocketProvider url={wsUrl}>{children}</WebSocketProvider>;
 }
