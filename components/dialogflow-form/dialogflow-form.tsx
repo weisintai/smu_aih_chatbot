@@ -325,8 +325,8 @@ const DialogflowForm: React.FC = () => {
   return (
     <div className="flex flex-col h-screen p-4">
       <div
-        className={`w-full bg-background flex items-center h-full  ${
-          (hasMessages || isPending) && "flex-col justify-between"
+        className={`w-full grid bg-background grid-rows-1 grid-cols-1 justify-center h-full ${
+          hasMessages || isPending ? "justify-between" : "items-center"
         }`}
       >
         {(hasMessages || isPending) && (
@@ -477,26 +477,26 @@ const DialogflowForm: React.FC = () => {
               </div>
             </div>
           </form>
-          <div>
-            <p className="text-xs font-medium text-center text-muted-foreground mt-4">
-              digibuddy can make mistakes. Consider checking important
-              information.
-            </p>
+        </div>
+        <div className="justify-end">
+          <p className="text-xs font-medium text-center text-muted-foreground mt-4">
+            digibuddy can make mistakes. Consider checking important
+            information.
+          </p>
 
-            {hasMessages && (
-              <>
-                <p className="text-[0.7rem] font-medium text-center text-muted-foreground/80 mt-1">
-                  Chat clears after 30 minutes of inactivity.
-                </p>
-                <div className="w-full flex justify-center">
-                  <ResetConversationButton
-                    onReset={resetConversation}
-                    isPending={isPending}
-                  />
-                </div>
-              </>
-            )}
-          </div>
+          {hasMessages && (
+            <>
+              <p className="text-[0.7rem] font-medium text-center text-muted-foreground/80 mt-1">
+                Chat clears after 30 minutes of inactivity.
+              </p>
+              <div className="w-full flex justify-center">
+                <ResetConversationButton
+                  onReset={resetConversation}
+                  isPending={isPending}
+                />
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
