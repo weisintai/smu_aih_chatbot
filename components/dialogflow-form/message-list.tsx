@@ -42,7 +42,7 @@ export const MessageList: React.FC<MessageListProps> = ({
   }, [isStreaming, streamingMessage]);
 
   return (
-    <div className="flex-grow overflow-y-auto px-4 pt-4">
+    <div className="flex-grow overflow-y-auto w-full">
       <div className="flex flex-col items-start gap-8 pb-10 min-h-[75vh] sm:w-[95%]">
         {messages.map((message, index) => {
           return index !== messages.length - 1 ? (

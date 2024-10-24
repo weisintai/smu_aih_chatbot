@@ -1,6 +1,5 @@
 "use client";
 
-import "./stylesheet.scss";
 import React, {
   useState,
   FormEvent,
@@ -19,7 +18,6 @@ import { resetSessionCookies } from "./actions";
 import { LoadingSpinner } from "../loading-spinner";
 import { ResetConversationButton } from "./reset-conversation-button";
 import GradualSpacing from "@/components/ui/gradual-spacing";
-import BlurFade from "@/components/ui/blur-fade";
 import { MessageList } from "./message-list";
 import { useWebSocket } from "next-ws/client";
 import { downsampleBuffer, getNextDelay } from "./utils";
@@ -325,178 +323,179 @@ const DialogflowForm: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen webContainer">
-      <MessageList
-        messages={messages}
-        isPending={isPending}
-        isStreaming={isStreaming}
-        streamingMessage={streamingMessage}
-      />
-      <div className="w-full pb-4 pt-1 bg-background">
-        <div className="max-w-3xl w-full mx-auto flex flex-col gap-1.5 bg-background inputContainer">
-          <div className={`inputSectWrapper ${hasMessages && "active"}`}>
+    <div className="flex flex-col h-screen p-4">
+      <div
+        className={`w-full bg-background flex items-center h-full  ${
+          (hasMessages || isPending) && "flex-col justify-between"
+        }`}
+      >
+        {(hasMessages || isPending) && (
+          <MessageList
+            messages={messages}
+            isPending={isPending}
+            isStreaming={isStreaming}
+            streamingMessage={streamingMessage}
+          />
+        )}
+        <div className="max-w-3xl w-full mx-auto flex flex-col gap-1.5 bg-background">
+          {!hasMessages && !isPending && (
             <GradualSpacing
-              className="welcomeHeading font-display text-center text-4xl font-bold -tracking-widest  text-black dark:text-white md:text-7xl md:leading-[5rem]"
+              className="md:!text-4xl text-xl mb-4 md:-tracking-widest tracking-[-.2em] font-bold "
               text="Welcome. Ask me anything"
             />
-            <form className="relative" onSubmit={handleSubmit}>
-              <BlurFade className="space-x-2 bg-muted rounded-2xl p-2">
-                <div>
-                  {file && (
-                    <div className="flex items-center gap-2 px-14 pb-2">
-                      <div className="overflow-hidden max-w-60">
-                        <p className="text-muted-foreground whitespace-nowrap">
-                          {file.name}
-                        </p>
-                        <p>{file.type}</p>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className=""
-                        onClick={() => {
-                          fileInputRef.current!.value = "";
-                          setFile(null);
-                        }}
-                      >
-                        <X className="h-5 w-5" />
-                        <span className="sr-only">Remove</span>
-                      </Button>
+          )}
+          <form className="relative" onSubmit={handleSubmit}>
+            <div className="space-x-2 bg-muted rounded-2xl p-2">
+              <div>
+                {file && (
+                  <div className="flex items-center gap-2 px-14 pb-2">
+                    <div className="overflow-hidden max-w-60">
+                      <p className="text-muted-foreground whitespace-nowrap">
+                        {file.name}
+                      </p>
+                      <p>{file.type}</p>
                     </div>
-                  )}
-                </div>
-                <div className="flex items-center">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="text-muted-foreground hover:text-foreground hover:bg-muted-hover"
-                    onClick={() => {
-                      fileInputRef.current?.click();
-                    }}
-                  >
-                    <Paperclip className="h-5 w-5" />
-                    <span className="sr-only">Attach</span>
-                    <Input
-                      type="file"
-                      accept="image/png, image/jpeg, application/pdf"
-                      ref={fileInputRef}
-                      onChange={(e) => {
-                        const selectedFile = e.target.files?.[0] || null;
-
-                        if (selectedFile) {
-                          const allowedTypes = [
-                            "image/jpeg",
-                            "image/png",
-                            "application/pdf",
-                          ];
-
-                          if (!allowedTypes.includes(selectedFile.type)) {
-                            toast({
-                              title: "Invalid file type",
-                              description:
-                                "Only JPEG, PNG, and PDF files are allowed.",
-                              variant: "destructive",
-                            });
-                            return;
-                          }
-                        }
-
-                        setFile(selectedFile);
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className=""
+                      onClick={() => {
+                        fileInputRef.current!.value = "";
+                        setFile(null);
                       }}
-                      className="sr-only"
-                      id="file-upload"
-                      aria-label="Upload file"
-                      tabIndex={-1}
-                    />
-                  </Button>
-                  <Textarea
-                    placeholder="Message Digi Buddy"
-                    ref={textareaRef}
-                    name="message"
-                    rows={1}
-                    id="message"
-                    value={input}
+                    >
+                      <X className="h-5 w-5" />
+                      <span className="sr-only">Remove</span>
+                    </Button>
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="text-muted-foreground hover:text-foreground hover:bg-muted-hover"
+                  onClick={() => {
+                    fileInputRef.current?.click();
+                  }}
+                >
+                  <Paperclip className="h-5 w-5" />
+                  <span className="sr-only">Attach</span>
+                  <Input
+                    type="file"
+                    accept="image/png, image/jpeg, application/pdf"
+                    ref={fileInputRef}
                     onChange={(e) => {
-                      setInput(e.target.value);
-                    }}
-                    onKeyDown={(e) => {
-                      if (isListening) {
-                        stopListening();
+                      const selectedFile = e.target.files?.[0] || null;
+
+                      if (selectedFile) {
+                        const allowedTypes = [
+                          "image/jpeg",
+                          "image/png",
+                          "application/pdf",
+                        ];
+
+                        if (!allowedTypes.includes(selectedFile.type)) {
+                          toast({
+                            title: "Invalid file type",
+                            description:
+                              "Only JPEG, PNG, and PDF files are allowed.",
+                            variant: "destructive",
+                          });
+                          return;
+                        }
                       }
 
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        e.currentTarget.form?.dispatchEvent(
-                          new Event("submit", {
-                            cancelable: true,
-                            bubbles: true,
-                          })
-                        );
-                      }
+                      setFile(selectedFile);
                     }}
-                    className="min-h-[3rem] rounded-2xl resize-none p-4 border-none shadow-none"
+                    className="sr-only"
+                    id="file-upload"
+                    aria-label="Upload file"
+                    tabIndex={-1}
                   />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="text-muted-foreground hover:text-foreground hover:bg-muted-hover"
-                    disabled={isPending}
-                  >
-                    {isListening ? (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="text-muted-foreground hover:text-foreground hover:bg-muted-hover"
-                        onClick={stopListening}
-                      >
-                        <Mic className="h-5 w-5" />
-                        <span className="sr-only">Stop Listening</span>
-                      </Button>
-                    ) : (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="text-muted-foreground hover:text-foreground hover:bg-muted-hover"
-                        onClick={startListening}
-                      >
-                        <Mic className="h-5 w-5" />
-                        <span className="sr-only">Start Listening</span>
-                      </Button>
-                    )}
-                    <span className="sr-only">Voice Message</span>
-                  </Button>
-                  <Button
-                    type="submit"
-                    variant="ghost"
-                    size="icon"
-                    className="text-muted-foreground hover:text-foreground hover:bg-muted-hover"
-                    disabled={isPending || (!input.trim() && !file)}
-                  >
-                    <ArrowUp className="h-5 w-5" />
-                    <span className="sr-only">Send</span>
-                  </Button>
-                </div>
-              </BlurFade>
-            </form>
-            <BlurFade>
-              <p className="disclaimerSect text-xs font-medium text-center text-muted-foreground">
-                Digi Buddy can make mistakes. Consider checking important
-                information.
-              </p>
-              <p className="disclaimerSect text-[0.7rem] font-medium text-center text-muted-foreground/80">
-                Chat clears after 30 minutes of inactivity.
-              </p>
-            </BlurFade>
+                </Button>
+                <Textarea
+                  placeholder="Message digibuddy"
+                  ref={textareaRef}
+                  name="message"
+                  rows={1}
+                  id="message"
+                  value={input}
+                  onChange={(e) => {
+                    setInput(e.target.value);
+                  }}
+                  onKeyDown={(e) => {
+                    if (isListening) {
+                      stopListening();
+                    }
 
-            <ResetConversationButton
-              onReset={resetConversation}
-              isPending={isPending}
-            />
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      e.currentTarget.form?.dispatchEvent(
+                        new Event("submit", {
+                          cancelable: true,
+                          bubbles: true,
+                        })
+                      );
+                    }
+                  }}
+                  className="min-h-[3rem] rounded-2xl resize-none p-4 border-none shadow-none"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="text-muted-foreground hover:text-foreground hover:bg-muted-hover"
+                  onClick={isListening ? stopListening : startListening}
+                  disabled={isPending}
+                >
+                  {isListening ? (
+                    <>
+                      <X className="h-5 w-5" />
+                      <span className="sr-only">Stop Listening</span>
+                    </>
+                  ) : (
+                    <>
+                      <Mic className="h-5 w-5" />
+                      <span className="sr-only">Start Listening</span>
+                    </>
+                  )}
+                  <span className="sr-only">Voice Message</span>
+                </Button>
+                <Button
+                  type="submit"
+                  variant="ghost"
+                  size="icon"
+                  className="text-muted-foreground hover:text-foreground hover:bg-muted-hover"
+                  disabled={isPending || (!input.trim() && !file)}
+                >
+                  <ArrowUp className="h-5 w-5" />
+                  <span className="sr-only">Send</span>
+                </Button>
+              </div>
+            </div>
+          </form>
+          <div>
+            <p className="text-xs font-medium text-center text-muted-foreground mt-4">
+              digibuddy can make mistakes. Consider checking important
+              information.
+            </p>
+
+            {hasMessages && (
+              <>
+                <p className="text-[0.7rem] font-medium text-center text-muted-foreground/80 mt-1">
+                  Chat clears after 30 minutes of inactivity.
+                </p>
+                <div className="w-full flex justify-center">
+                  <ResetConversationButton
+                    onReset={resetConversation}
+                    isPending={isPending}
+                  />
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

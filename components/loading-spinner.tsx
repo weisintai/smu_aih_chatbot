@@ -1,7 +1,7 @@
 export function LoadingSpinner() {
   return (
     <svg
-      className="h-8 w-8 animate-spin text-gray-900 dark:text-gray-50"
+      className="h-8 w-8 animate-spin text-gray-900"
       viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"

@@ -51,7 +51,7 @@ const detectIntent = async (
   }
 
   const response = await ky
-    .post("/api/detectIntent", { body: formData })
+    .post("/api/detectIntent", { body: formData, timeout: false })
     .json();
 
   return response as DialogflowResponse;
