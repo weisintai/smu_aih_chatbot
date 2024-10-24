@@ -1,6 +1,6 @@
 "use client";
 
-import './stylesheet.scss';
+import "./stylesheet.scss";
 import React, {
   useState,
   FormEvent,
@@ -23,7 +23,6 @@ import BlurFade from "@/components/ui/blur-fade";
 import { MessageList } from "./message-list";
 import { useWebSocket } from "next-ws/client";
 import { downsampleBuffer, getNextDelay } from "./utils";
-import { AlertDialogHeader, AlertDialogFooter } from '../ui/alert-dialog';
 
 interface Message {
   role: "user" | "assistant";
@@ -41,7 +40,6 @@ const DialogflowForm: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messageContainerRef = useRef<ElementRef<"div">>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
 
   const [input, setInput] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -151,7 +149,6 @@ const DialogflowForm: React.FC = () => {
             return data.transcript;
           }
         });
-        console.log(data.transcript);
       }
     }
 
@@ -329,55 +326,6 @@ const DialogflowForm: React.FC = () => {
 
   return (
     <div className="flex flex-col h-screen webContainer">
-      {/* <div className="flex-grow overflow-y-auto px-4 pt-4 convoSect">
-        <div className="flex flex-col items-start gap-8 pb-10 min-h-[75vh] sm:w-[95%] convoWrapper">
-          {messages.map((message, index) => {
-            return index !== messages.length - 1 ? (
-              <div
-                key={index}
-                className="flex flex-col items-start gap-4 whitespace-pre-wrap markdown"
-              >
-                {message.role === "user" ? (
-                  <div className="flex gap-2 items-center">
-                    <Avatar className="w-8 h-8 self-start">
-                      <AvatarFallback>
-                        {message.role === "user" ? "U" : "A"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col gap-2">
-                      {message.fileName && (
-                        <div className="flex items-center gap-2">
-                          <Paperclip className="h-5 w-5" />
-                          <div className="overflow-hidden max-w-60">
-                            <p className="text-muted-foreground whitespace-nowrap">
-                              {message.fileName}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                      <Markdown>{message.content}</Markdown>
-                    </div>
-                  </div>
-                ) : (
-                  <BotMessage message={message.content} />
-                )}
-              </div>
-            ) : (
-              !isStreaming && <BotMessage message={message.content} />
-            );
-          })}
-          {isStreaming && (
-            <div
-              ref={messageContainerRef}
-              className="flex flex-col items-start gap-4 whitespace-pre-wrap markdown"
-            >
-              <Markdown>{streamingMessage}</Markdown>
-            </div>
-          )}
-          {(isPending || isStreaming) && <LoadingSpinner />}
-        </div>
-        <div ref={scrollRef}></div>
-      </div> */}
       <MessageList
         messages={messages}
         isPending={isPending}
@@ -474,10 +422,17 @@ const DialogflowForm: React.FC = () => {
                       setInput(e.target.value);
                     }}
                     onKeyDown={(e) => {
+                      if (isListening) {
+                        stopListening();
+                      }
+
                       if (e.key === "Enter" && !e.shiftKey) {
                         e.preventDefault();
                         e.currentTarget.form?.dispatchEvent(
-                          new Event("submit", { cancelable: true, bubbles: true })
+                          new Event("submit", {
+                            cancelable: true,
+                            bubbles: true,
+                          })
                         );
                       }
                     }}
@@ -490,7 +445,29 @@ const DialogflowForm: React.FC = () => {
                     className="text-muted-foreground hover:text-foreground hover:bg-muted-hover"
                     disabled={isPending}
                   >
-                    <Mic className="h-5 w-5" />
+                    {isListening ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="text-muted-foreground hover:text-foreground hover:bg-muted-hover"
+                        onClick={stopListening}
+                      >
+                        <Mic className="h-5 w-5" />
+                        <span className="sr-only">Stop Listening</span>
+                      </Button>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="text-muted-foreground hover:text-foreground hover:bg-muted-hover"
+                        onClick={startListening}
+                      >
+                        <Mic className="h-5 w-5" />
+                        <span className="sr-only">Start Listening</span>
+                      </Button>
+                    )}
                     <span className="sr-only">Voice Message</span>
                   </Button>
                   <Button
@@ -516,42 +493,10 @@ const DialogflowForm: React.FC = () => {
               </p>
             </BlurFade>
 
-            
             <ResetConversationButton
-                  onReset={resetConversation}
-                  isPending={isPending}
-                />
-
-            {/* <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <div className='buttonWrapper'>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="self-center resetButton"
-                    disabled={isPending || isStreaming}
-                  >
-                    Reset conversation
-                  </Button>
-                </div>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete
-                    your account and remove your data from our servers.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={resetConversation}>
-                    Continue
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog> */}
-
+              onReset={resetConversation}
+              isPending={isPending}
+            />
           </div>
         </div>
       </div>
