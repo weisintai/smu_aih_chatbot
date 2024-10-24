@@ -412,7 +412,7 @@ const DialogflowForm: React.FC = () => {
                     />
                   </Button>
                   <Textarea
-                    placeholder="Message [botname]"
+                    placeholder="Message Digi Buddy"
                     ref={textareaRef}
                     name="message"
                     rows={1}
@@ -485,7 +485,7 @@ const DialogflowForm: React.FC = () => {
             </form>
             <BlurFade>
               <p className="disclaimerSect text-xs font-medium text-center text-muted-foreground">
-                [botname] can make mistakes. Consider checking important
+                Digi Buddy can make mistakes. Consider checking important
                 information.
               </p>
               <p className="disclaimerSect text-[0.7rem] font-medium text-center text-muted-foreground/80">
