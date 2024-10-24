@@ -26,6 +26,9 @@ importers:
       '@google-cloud/translate':
         specifier: ^8.5.0
         version: 8.5.0
+      '@google-cloud/vertexai':
+        specifier: ^1.9.0
+        version: 1.9.0
       '@google-cloud/vision':
         specifier: ^4.3.2
         version: 4.3.2
@@ -237,6 +240,10 @@ packages:
   '@google-cloud/translate@8.5.0':
     resolution: {integrity: sha512-avQa3WLkO3PSk2fiV6Af/PmeDnM6XWGDgO+Z+hZ/FZpBRMjCW1Px9MNLbM1sBKGjt/uM8aOGHqow/AAR7lLsUA==}
     engines: {node: '>=14.0.0'}
+
+  '@google-cloud/vertexai@1.9.0':
+    resolution: {integrity: sha512-8brlcJwFXI4fPuBtsDNQqCdWZmz8gV9jeEKOU0vc5H2SjehCQpXK/NwuSEr916zbhlBHtg/sU37qQQdgvh5BRA==}
+    engines: {node: '>=18.0.0'}
 
   '@google-cloud/vision@4.3.2':
     resolution: {integrity: sha512-JZBM1yW3jspMeYpbtB/HpFbGSwUmQsVXhb+3kwXlkliZJIJ7nomTZC8lFG9obJP1t27tWLMURlmz5EU/H7e7Ow==}
@@ -3107,6 +3114,13 @@ snapshots:
       extend: 3.0.2
       google-gax: 4.4.1
       is-html: 2.0.0
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
+
+  '@google-cloud/vertexai@1.9.0':
+    dependencies:
+      google-auth-library: 9.14.1
     transitivePeerDependencies:
       - encoding
       - supports-color

@@ -15,6 +15,7 @@ import {
   LANGUAGE_CODE,
   SUBDOMAIN_REGION,
 } from "@/utils/constants";
+import { VertexAI } from "@google-cloud/vertexai";
 
 interface RequestData {
   query: string;
@@ -40,11 +41,14 @@ export async function POST(request: NextRequest) {
   }
 
   let fileAnalysisResult = null;
+  let base64File = null;
+  let fileType = null;
 
   if (file) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
-    const fileType = await fileTypeFromBuffer(Buffer.from(buffer));
+    fileType = await fileTypeFromBuffer(Buffer.from(buffer));
+    base64File = buffer.toString("base64");
 
     const allowedTypes = ["image/jpeg", "image/png", "application/pdf"];
 
@@ -77,7 +81,7 @@ export async function POST(request: NextRequest) {
           ) || [],
         safeSearch: result.safeSearchAnnotation || {},
       };
-      console.log("Image analysis result:", fileAnalysisResult);
+
       query = `**Image Analysis:**
 
 * **Text:** "The image contains the following text: '${fileAnalysisResult.text.replace(
@@ -96,7 +100,7 @@ export async function POST(request: NextRequest) {
       const [pdfAnalysisResult] = await client.processDocument({
         name: `projects/${PROJECT_ID}/locations/${LOCATION_ID}/processors/${PROCESSOR_ID}`,
         inlineDocument: {
-          content: buffer.toString("base64"),
+          content: base64File,
           mimeType: "application/pdf",
         },
       });
@@ -128,8 +132,6 @@ export async function POST(request: NextRequest) {
       sessionId
     );
 
-    console.log(query);
-
     const request: protos.google.cloud.dialogflow.cx.v3.IDetectIntentRequest = {
       session: sessionPath,
       queryInput: {
@@ -142,6 +144,88 @@ export async function POST(request: NextRequest) {
     };
 
     const [response] = await sessionClient.detectIntent(request);
+
+    const assistantMessage = response.queryResult?.responseMessages?.find(
+      (message) => message.text
+    )?.text?.text?.[0];
+
+    console.log("Assistant response:", assistantMessage);
+
+    const vertexAI = new VertexAI({
+      project: PROJECT_ID,
+      location: "asia-southeast1",
+    });
+
+    const generativeModel = vertexAI.getGenerativeModel({
+      model: "gemini-1.5-flash-002",
+    });
+
+    const geminiPrompt = `
+    **Prompt:**
+
+**User Query:** "${query}"
+
+**Vertex AI Agent Response:**
+
+${assistantMessage || ""}
+
+**Instructions:**
+With reference from the response from Vertex AI Agent, answer the user query (do not trust the response fully, make your own judgement, and combine it with the response from Vertex AI Agent if it makes sense).
+
+Remember these pointers when crafting your response:
+- empathetic reflections of user concerns, followed by clear, fact-supported responses
+- friendly and informal communication style
+- match the personality and tone to the user's query
+- include humor where appropriate
+- avoid jargon and technical terms
+- you're just a postprocessing step, so don't worry about greeting, closing, or other formalities, 
+- don't mention about Vertex AI, act like you're answering the user query directly
+- no need to ask follow-up questions if the vertex AI response already covers the query well
+- if agent response contains phone numbers or email addresses, please keep them
+
+Response in user query's language (IMPORTANT), with a slight Singapore local touch (where appropriate, no need to force it in every response), 
+and must keep it short and concise as it is for migrant workers. (Best to keep it within 1-2 sentences)
+`;
+
+    // console.log(geminiPrompt);
+
+    const resp = await generativeModel.generateContent(
+      // base64File && fileType
+      //   ? {
+      //       contents: [
+      //         {
+      //           role: "user",
+      //           parts: [
+      //             {
+      //               inlineData: {
+      //                 data: base64File,
+      //                 mimeType: fileType.mime,
+      //               },
+      //             },
+      //             {
+      //               text: geminiPrompt,
+      //             },
+      //           ],
+      //         },
+      //       ],
+      //     }
+      // :
+      geminiPrompt
+    );
+
+    const contentResponse = await resp.response;
+
+    try {
+      if (
+        response.queryResult?.responseMessages?.[0]?.text?.text &&
+        contentResponse.candidates?.[0]?.content?.parts?.[0]?.text
+      ) {
+        response.queryResult.responseMessages[0].text.text[0] = contentResponse
+          .candidates[0].content.parts[0].text as string;
+      }
+    } catch (error) {
+      console.error("Error updating response:", error);
+    }
 
     const nextResponse = NextResponse.json(response);
 
