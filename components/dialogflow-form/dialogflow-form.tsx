@@ -6,6 +6,7 @@ import React, {
   useRef,
   useEffect,
   ElementRef,
+  useCallback,
 } from "react";
 import useDetectIntent from "@/hooks/useDetectIntent";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,8 @@ import { resetSessionCookies } from "./actions";
 import { LoadingSpinner } from "../loading-spinner";
 import { ResetConversationButton } from "./reset-conversation-button";
 import { MessageList } from "./message-list";
+import { useWebSocket } from "next-ws/client";
+import { downsampleBuffer, getNextDelay } from "./utils";
 
 interface Message {
   role: "user" | "assistant";
@@ -28,19 +31,25 @@ const STORAGE_KEY = "dialogflow_messages";
 const SESSION_EXPIRY_KEY = "dialogflow_session_expiry";
 
 const DialogflowForm: React.FC = () => {
-  const [input, setInput] = useState("");
-  const [file, setFile] = useState<File | null>(null);
-  const [streamingMessage, setStreamingMessage] = useState("");
-  const [isStreaming, setIsStreaming] = useState(false);
-
-  const [messages, setMessages] = useState<Message[]>([]);
   const [isClient, setIsClient] = useState(false);
-  const { mutate, isPending } = useDetectIntent();
 
   const scrollRef = useRef<ElementRef<"div">>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messageContainerRef = useRef<ElementRef<"div">>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const [input, setInput] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [streamingMessage, setStreamingMessage] = useState("");
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const { mutate, isPending } = useDetectIntent();
+
+  const ws = useWebSocket(); // useWebSocket hook remains unchanged
+  const [isListening, setIsListening] = useState(false);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const workletNodeRef = useRef<AudioWorkletNode | null>(null);
 
   const { toast } = useToast();
 
@@ -78,6 +87,14 @@ const DialogflowForm: React.FC = () => {
     setFile(null);
   };
 
+  useEffect(() => {
+    if (isStreaming) {
+      messageContainerRef.current?.scrollIntoView({
+        behavior: "smooth",
+      });
+    }
+  }, [isStreaming]);
+
   const simulateStreaming = (message: string) => {
     setIsStreaming(true);
     setMessages((prev) => [...prev, { role: "assistant", content: message }]);
@@ -103,31 +120,132 @@ const DialogflowForm: React.FC = () => {
     streamNextWord();
   };
 
-  const getNextDelay = (word: string): number => {
-    const baseDelay = 30; // Increased base delay for readability
-    const variableDelay = Math.random() * 100; // 0-100ms of variable delay
-
-    const lastChar = word[word.length - 1];
-    if ([".", "!", "?"].includes(lastChar)) {
-      return baseDelay + variableDelay + 600; // Longer pause after sentences
-    } else if ([",", ";", ":"].includes(lastChar)) {
-      return baseDelay + variableDelay + 300; // Medium pause after clauses
-    } else {
-      return baseDelay + variableDelay;
-    }
-  };
+  // Speech to text logic
 
   useEffect(() => {
-    if (isStreaming) {
-      messageContainerRef.current?.scrollIntoView({
-        behavior: "smooth",
-      });
+    function onMessage(event: MessageEvent) {
+      const data = JSON.parse(event.data);
+
+      if (data.event === "interimTranscription") {
+        // Update interim transcript
+        // setInterimTranscript(data.transcript);
+        console.log("Interim:", data.transcript);
+      } else if (data.event === "finalTranscription") {
+        // Append final transcript and clear interim
+        // setFinalTranscript((prev) => prev + " " + data.transcript);
+        // setInterimTranscript("");
+
+        // TODO: Add final transcript to input field
+        setInput((prev) => {
+          if (prev.trim()) {
+            return prev + " " + data.transcript;
+          } else {
+            return data.transcript;
+          }
+        });
+        console.log(data.transcript);
+      }
     }
-  }, [isStreaming]);
+
+    function onError(error: Event) {
+      console.error("WebSocket error:", error);
+    }
+
+    ws?.addEventListener("message", onMessage);
+    ws?.addEventListener("error", onError);
+
+    return () => {
+      ws?.removeEventListener("message", onMessage);
+      ws?.removeEventListener("error", onError);
+    };
+  }, [ws]);
+
+  const startListening = useCallback(async () => {
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      console.error("WebSocket is not connected yet.");
+      return;
+    }
+
+    try {
+      setIsListening(true);
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+      });
+      mediaStreamRef.current = stream;
+
+      const audioContext = new (window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext })
+          .webkitAudioContext)();
+      audioContextRef.current = audioContext;
+
+      // Load the audio worklet processor
+      await audioContext.audioWorklet.addModule("/recorder-worklet.js");
+
+      const workletNode = new AudioWorkletNode(
+        audioContext,
+        "recorder.worklet"
+      );
+      workletNodeRef.current = workletNode;
+
+      // Handle messages from the audio worklet processor
+      workletNode.port.onmessage = (event) => {
+        try {
+          const inputData = event.data as Float32Array;
+          const buffer = downsampleBuffer(
+            inputData,
+            audioContext.sampleRate,
+            16000
+          );
+
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(buffer);
+          }
+        } catch (error) {
+          console.error("Error processing audio data:", error);
+        }
+      };
+
+      const source = audioContext.createMediaStreamSource(stream);
+      source.connect(workletNode);
+
+      ws.send(JSON.stringify({ event: "startGoogleCloudStream" }));
+    } catch (error) {
+      console.error("Error starting speech recognition:", error);
+      setIsListening(false);
+    }
+  }, [ws]);
+
+  const stopListening = useCallback(() => {
+    if (!ws) return;
+
+    setIsListening(false);
+    ws.send(JSON.stringify({ event: "endGoogleCloudStream" }));
+
+    if (workletNodeRef.current) {
+      workletNodeRef.current.port.postMessage("stop");
+      workletNodeRef.current.disconnect();
+    }
+
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+    }
+
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+    }
+
+    workletNodeRef.current = null;
+    audioContextRef.current = null;
+    mediaStreamRef.current = null;
+
+    // TODO: If no final and interim transcript is not empty, add it to input field if stopped listening
+  }, [ws]);
+
+  // Form submission logic
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!input.trim() && !file) return;
+    if (!input.trim()) return;
 
     const newMessage: Message = {
       role: "user",
@@ -198,7 +316,7 @@ const DialogflowForm: React.FC = () => {
       <div className="w-dvw h-dvh flex justify-center items-center">
         <LoadingSpinner />
       </div>
-    ); // Or any loading indicator
+    );
   }
 
   return (
@@ -294,6 +412,8 @@ const DialogflowForm: React.FC = () => {
                     setInput(e.target.value);
                   }}
                   onKeyDown={(e) => {
+                    stopListening();
+
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
 
@@ -302,7 +422,7 @@ const DialogflowForm: React.FC = () => {
                       );
                     }
                   }}
-                  className="min-h-[3rem] rounded-2xl resize-none p-4 border-none shadow-none"
+                  className="min-h-[3rem] rounded-2xl resize-none px-4 pt-4 pb-0 border-none shadow-none leading-none	"
                 />
                 <Button
                   type="button"
@@ -310,8 +430,13 @@ const DialogflowForm: React.FC = () => {
                   size="icon"
                   className="text-muted-foreground hover:text-foreground hover:bg-muted-hover"
                   disabled={isPending}
+                  onClick={isListening ? stopListening : startListening}
                 >
-                  <Mic className="h-5 w-5" />
+                  {isListening ? (
+                    <X className="h-5 w-5" />
+                  ) : (
+                    <Mic className="h-5 w-5" />
+                  )}
                   <span className="sr-only">Voice Message</span>
                 </Button>
                 <Button
@@ -319,7 +444,7 @@ const DialogflowForm: React.FC = () => {
                   variant="ghost"
                   size="icon"
                   className="text-muted-foreground hover:text-foreground hover:bg-muted-hover"
-                  disabled={isPending || (!input.trim() && !file)}
+                  disabled={isPending || !input.trim()}
                 >
                   <ArrowUp className="h-5 w-5" />
                   <span className="sr-only">Send</span>

@@ -2,7 +2,7 @@ import React, { useRef, useEffect } from "react";
 import { Message } from "./types";
 import { LoadingSpinner } from "../loading-spinner";
 import Markdown from "react-markdown";
-import { TextToSpeechButton } from "@/components/text-to-speech-button";
+import { TextToSpeechButton } from "@/components/dialogflow-form/text-to-speech-button";
 import { Avatar, AvatarFallback } from "@radix-ui/react-avatar";
 import { Paperclip } from "lucide-react";
 
@@ -72,11 +72,11 @@ export const MessageList: React.FC<MessageListProps> = ({
                   </div>
                 </div>
               ) : (
-                <BotMessage message={message.content} />
+                <BotMessage message={message.content} key={index} />
               )}
             </div>
           ) : (
-            !isStreaming && <BotMessage message={message.content} />
+            !isStreaming && <BotMessage message={message.content} key={index} />
           );
         })}
         {isStreaming && (
