@@ -15,6 +15,7 @@
     "@google-cloud/speech": "^6.7.0",
     "@google-cloud/text-to-speech": "^5.4.0",
     "@google-cloud/translate": "^8.5.0",
+    "@google-cloud/vertexai": "^1.9.0",
     "@google-cloud/vision": "^4.3.2",
     "@hookform/resolvers": "^3.9.0",
     "@radix-ui/react-alert-dialog": "^1.1.2",
