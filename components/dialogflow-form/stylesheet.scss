@@ -35,7 +35,16 @@ body {
             margin-top: -30%;
 
             &.active {
-                margin-top: -5%!important;
+                margin-top: -2%!important;
+
+                .welcomeHeading {
+                    opacity: 0!important;
+                    transition: .5s;
+                }
+                
+                .buttonWrapper {
+                    display: flex!important;
+                }
             }
 
             .welcomeHeading {
