@@ -1,3 +1,4 @@
+import './stylesheet.scss';
 import React from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,14 +24,16 @@ export const ResetConversationButton: React.FC<
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="self-center"
-          disabled={isPending}
-        >
-          Reset conversation
-        </Button>
+        <div className='buttonWrapper'>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="self-center resetButton"
+            disabled={isPending}
+          >
+            Reset conversation
+          </Button>
+        </div>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
