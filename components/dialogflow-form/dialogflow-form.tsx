@@ -41,6 +41,7 @@ const DialogflowForm: React.FC = () => {
 
   const [input, setInput] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [hasFile, setHasFile] = useState(false);
   const [streamingMessage, setStreamingMessage] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -250,6 +251,8 @@ const DialogflowForm: React.FC = () => {
     e.preventDefault();
     if (!input.trim()) return;
 
+    setHasFile(!!file);
+
     const newMessage: Message = {
       role: "user",
       content: input,
@@ -335,6 +338,7 @@ const DialogflowForm: React.FC = () => {
             isPending={isPending}
             isStreaming={isStreaming}
             streamingMessage={streamingMessage}
+            isFilePending={hasFile}
           />
         )}
         <div className="max-w-3xl w-full mx-auto flex flex-col gap-1.5 bg-background">

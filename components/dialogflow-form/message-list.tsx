@@ -11,6 +11,7 @@ interface MessageListProps {
   isPending: boolean;
   isStreaming: boolean;
   streamingMessage: string;
+  isFilePending: boolean;
 }
 
 const BotMessage = ({ message }: { message: string }) => {
@@ -27,6 +28,7 @@ export const MessageList: React.FC<MessageListProps> = ({
   isPending,
   isStreaming,
   streamingMessage,
+  isFilePending,
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const messageContainerRef = useRef<HTMLDivElement>(null);
@@ -87,7 +89,14 @@ export const MessageList: React.FC<MessageListProps> = ({
             <Markdown>{streamingMessage}</Markdown>
           </div>
         )}
-        {(isPending || isStreaming) && <LoadingSpinner />}
+        {
+          <span className="flex items-center gap-2">
+            <span>{(isPending || isStreaming) && <LoadingSpinner />}</span>
+            <span className="text-muted-foreground">
+              {isPending && isFilePending && "Analyzing file..."}
+            </span>
+          </span>
+        }
       </div>
       <div ref={scrollRef}></div>
     </div>
