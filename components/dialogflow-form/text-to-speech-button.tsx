@@ -3,6 +3,7 @@
 import React, { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Volume2, CirclePause } from "lucide-react";
+import { LoadingSpinner } from "../loading-spinner";
 
 export function TextToSpeechButton({ text }: { text: string }) {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -38,6 +39,7 @@ export function TextToSpeechButton({ text }: { text: string }) {
       audioRef.current.src = url;
       audioRef.current.onended = () => setIsPlaying(false);
       audioRef.current.play();
+
       setIsPlaying(true);
     } catch (err) {
       console.error("Error:", err);
@@ -56,6 +58,8 @@ export function TextToSpeechButton({ text }: { text: string }) {
     >
       {isPlaying ? (
         <CirclePause className="h-4 w-4" />
+      ) : isLoading ? (
+        <LoadingSpinner />
       ) : (
         <Volume2 className="h-4 w-4" />
       )}
