@@ -249,7 +249,7 @@ const DialogflowForm: React.FC = () => {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (isPending || !input.trim() || isStreaming) return;
 
     setHasFile(!!file);
 
@@ -473,7 +473,7 @@ const DialogflowForm: React.FC = () => {
                   variant="ghost"
                   size="icon"
                   className="text-muted-foreground hover:text-foreground hover:bg-muted-hover"
-                  disabled={isPending || (!input.trim() && !file)}
+                  disabled={isPending || !input.trim() || isStreaming}
                 >
                   <ArrowUp className="h-5 w-5" />
                   <span className="sr-only">Send</span>
