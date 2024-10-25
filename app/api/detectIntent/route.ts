@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
 
     const vertexAI = new VertexAI({
       project: PROJECT_ID,
-      location: "asia-southeast1",
+      location: "us-central1",
     });
 
     const generativeModel = vertexAI.getGenerativeModel({
