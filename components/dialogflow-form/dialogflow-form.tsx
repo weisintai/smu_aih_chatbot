@@ -91,6 +91,21 @@ const DialogflowForm: React.FC = () => {
     setInput("");
     fileInputRef.current!.value = "";
     setFile(null);
+    textareaRef.current!.value = "";
+
+    adjustTextareaHeight();
+  };
+
+  const MAX_HEIGHT = 96; // Four lines (24px × 4)
+
+  const adjustTextareaHeight = () => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = `auto`; // Reset to minimum
+
+      const newHeight = Math.min(textarea.scrollHeight, MAX_HEIGHT);
+      textarea.style.height = textarea.value.trim() ? `${newHeight}px` : `auto`;
+    }
   };
 
   useEffect(() => {
@@ -430,6 +445,7 @@ const DialogflowForm: React.FC = () => {
                   value={input}
                   onChange={(e) => {
                     setInput(e.target.value);
+                    adjustTextareaHeight();
                   }}
                   onKeyDown={(e) => {
                     if (isListening) {
@@ -446,7 +462,7 @@ const DialogflowForm: React.FC = () => {
                       );
                     }
                   }}
-                  className="min-h-[3rem] rounded-2xl resize-none p-4 border-none shadow-none"
+                  className="min-h-4 rounded-2xl resize-none border-none shadow-none"
                 />
                 <Button
                   type="button"
