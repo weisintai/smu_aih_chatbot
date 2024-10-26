@@ -21,6 +21,7 @@ import GradualSpacing from "@/components/ui/gradual-spacing";
 import { MessageList } from "./message-list";
 import { useWebSocket } from "next-ws/client";
 import { downsampleBuffer, getNextDelay } from "./utils";
+import TagList from "./tag-list";
 
 interface Message {
   role: "user" | "assistant";
@@ -338,12 +339,15 @@ const DialogflowForm: React.FC = () => {
             isFilePending={hasFile}
           />
         )}
-        <div className="max-w-3xl w-full mx-auto flex flex-col gap-1.5 bg-background">
+        <div className="max-w-3xl w-full mx-auto flex flex-col gap-4 bg-background h-full justify-between md:justify-center">
           {!hasMessages && !isPending && (
-            <GradualSpacing
-              className="md:!text-4xl text-xl mb-4 md:-tracking-widest tracking-[-.23em] font-bold "
-              text="Welcome. Ask me anything"
-            />
+            <div className="gap-1.5 flex flex-col my-auto md:my-0">
+              <GradualSpacing
+                className="md:!text-4xl text-xl mb-4 md:-tracking-widest tracking-[-.23em] font-bold "
+                text="Welcome. Ask me anything"
+              />
+              <TagList />
+            </div>
           )}
           <form className="relative" onSubmit={handleSubmit}>
             <div className="space-x-2 bg-muted rounded-2xl p-2">
