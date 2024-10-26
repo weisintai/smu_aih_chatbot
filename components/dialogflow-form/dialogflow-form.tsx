@@ -340,6 +340,12 @@ const DialogflowForm: React.FC = () => {
     return "Good evening";
   };
 
+  const isMobileRef = useRef(false);
+
+  useEffect(() => {
+    isMobileRef.current = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  }, []);
+
   if (!isClient) {
     return (
       <div className="w-dvw h-dvh flex justify-center items-center">
@@ -477,7 +483,11 @@ const DialogflowForm: React.FC = () => {
                         stopListening();
                       }
 
-                      if (e.key === "Enter" && !e.shiftKey) {
+                      if (
+                        e.key === "Enter" &&
+                        !e.shiftKey &&
+                        !isMobileRef.current
+                      ) {
                         e.preventDefault();
                         e.currentTarget.form?.dispatchEvent(
                           new Event("submit", {
