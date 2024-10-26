@@ -19,8 +19,8 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "CentsWise",
-  description: "Protect your finances with CentsWise",
+  title: "digibuddy",
+  description: "Protect your finances with digibuddy",
 };
 
 export default function RootLayout({
@@ -44,7 +44,7 @@ export default function RootLayout({
           sizes="180x180"
           href="/apple-touch-icon.png"
         />
-        <meta name="apple-mobile-web-app-title" content="CentsWise" />
+        <meta name="apple-mobile-web-app-title" content="digibuddy" />
         <link rel="manifest" href="/site.webmanifest" />
       </head>
       <body
