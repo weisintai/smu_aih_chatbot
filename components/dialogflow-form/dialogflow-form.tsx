@@ -374,7 +374,8 @@ const DialogflowForm: React.FC = () => {
               {size &&
                 size.width !== null &&
                 size.width <= 768 &&
-                !hasMessages && (
+                !hasMessages &&
+                !isPending && (
                   <TagList
                     onQuestionSelect={(question) => {
                       setInput(question);
@@ -523,17 +524,21 @@ const DialogflowForm: React.FC = () => {
               </div>
             </div>
           </form>
-          {size && size.width !== null && size.width > 768 && !hasMessages && (
-            <TagList
-              onQuestionSelect={(question) => {
-                setInput(question);
-                if (textareaRef.current) {
-                  textareaRef.current.value = question;
-                  adjustTextareaHeight();
-                }
-              }}
-            />
-          )}
+          {size &&
+            size.width !== null &&
+            size.width > 768 &&
+            !hasMessages &&
+            !isPending && (
+              <TagList
+                onQuestionSelect={(question) => {
+                  setInput(question);
+                  if (textareaRef.current) {
+                    textareaRef.current.value = question;
+                    adjustTextareaHeight();
+                  }
+                }}
+              />
+            )}
         </div>
         <div className="justify-end">
           <p className="text-[0.55rem] md:text-xs font-medium text-center text-muted-foreground mt-4">
