@@ -7,6 +7,7 @@ import React, {
   useEffect,
   ElementRef,
   useCallback,
+  useMemo,
 } from "react";
 import useDetectIntent from "@/hooks/useDetectIntent";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ import { MessageList } from "./message-list";
 import { useWebSocket } from "next-ws/client";
 import { downsampleBuffer, getNextDelay } from "./utils";
 import TagList from "./tag-list";
+import { useWindowSize } from "@uidotdev/usehooks";
 
 interface Message {
   role: "user" | "assistant";
@@ -46,8 +48,10 @@ const DialogflowForm: React.FC = () => {
   const [streamingMessage, setStreamingMessage] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [hasMessages, setHasMessages] = useState(false);
+  const hasMessages = useMemo(() => messages.length > 0, [messages]);
   const { mutate, isPending } = useDetectIntent();
+
+  const size = useWindowSize();
 
   const ws = useWebSocket(); // useWebSocket hook remains unchanged
   const [isListening, setIsListening] = useState(false);
@@ -83,8 +87,6 @@ const DialogflowForm: React.FC = () => {
         behavior: "smooth",
       });
     }
-
-    setHasMessages(messages.length > 0);
   }, [messages]);
 
   const clearInput = () => {
@@ -330,6 +332,14 @@ const DialogflowForm: React.FC = () => {
     resetSessionCookies();
   };
 
+  const getTimeBasedGreeting = () => {
+    const hour = new Date().getHours();
+
+    if (hour < 12) return "Good morning";
+    if (hour < 17) return "Good afternoon";
+    return "Good evening";
+  };
+
   if (!isClient) {
     return (
       <div className="w-dvw h-dvh flex justify-center items-center">
@@ -359,145 +369,171 @@ const DialogflowForm: React.FC = () => {
             <div className="gap-1.5 flex flex-col my-auto md:my-0">
               <GradualSpacing
                 className="md:!text-4xl text-xl mb-4 md:-tracking-widest tracking-[-.23em] font-bold "
-                text="Welcome. Ask me anything"
+                text={`${getTimeBasedGreeting()}! Ask me anything`}
               />
-              <TagList />
+              {size &&
+                size.width !== null &&
+                size.width <= 768 &&
+                !hasMessages && (
+                  <TagList
+                    onQuestionSelect={(question) => {
+                      setInput(question);
+                      if (textareaRef.current) {
+                        textareaRef.current.value = question;
+                        adjustTextareaHeight();
+                      }
+                    }}
+                  />
+                )}
             </div>
           )}
           <form className="relative" onSubmit={handleSubmit}>
-            <div className="space-x-2 bg-muted rounded-2xl p-2">
-              <div>
-                {file && (
-                  <div className="flex items-center gap-2 px-14 pb-2">
-                    <div className="overflow-hidden max-w-60">
-                      <p className="text-muted-foreground whitespace-nowrap">
-                        {file.name}
-                      </p>
-                      <p>{file.type}</p>
+            <div className="space-y-2">
+              <div className="space-x-2 bg-muted rounded-2xl p-2">
+                <div>
+                  {file && (
+                    <div className="flex items-center gap-2 px-14 pb-2">
+                      <div className="overflow-hidden max-w-60">
+                        <p className="text-muted-foreground whitespace-nowrap">
+                          {file.name}
+                        </p>
+                        <p>{file.type}</p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className=""
+                        onClick={() => {
+                          fileInputRef.current!.value = "";
+                          setFile(null);
+                        }}
+                      >
+                        <X className="h-5 w-5" />
+                        <span className="sr-only">Remove</span>
+                      </Button>
                     </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className=""
-                      onClick={() => {
-                        fileInputRef.current!.value = "";
-                        setFile(null);
-                      }}
-                    >
-                      <X className="h-5 w-5" />
-                      <span className="sr-only">Remove</span>
-                    </Button>
-                  </div>
-                )}
-              </div>
-              <div className="flex items-center">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="text-muted-foreground hover:text-foreground hover:bg-muted-hover"
-                  onClick={() => {
-                    fileInputRef.current?.click();
-                  }}
-                >
-                  <Paperclip className="h-5 w-5" />
-                  <span className="sr-only">Attach</span>
-                  <Input
-                    type="file"
-                    accept="image/png, image/jpeg, application/pdf"
-                    ref={fileInputRef}
-                    onChange={(e) => {
-                      const selectedFile = e.target.files?.[0] || null;
+                  )}
+                </div>
+                <div className="flex items-center">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="text-muted-foreground hover:text-foreground hover:bg-muted-hover"
+                    onClick={() => {
+                      fileInputRef.current?.click();
+                    }}
+                  >
+                    <Paperclip className="h-5 w-5" />
+                    <span className="sr-only">Attach</span>
+                    <Input
+                      type="file"
+                      accept="image/png, image/jpeg, application/pdf"
+                      ref={fileInputRef}
+                      onChange={(e) => {
+                        const selectedFile = e.target.files?.[0] || null;
 
-                      if (selectedFile) {
-                        const allowedTypes = [
-                          "image/jpeg",
-                          "image/png",
-                          "application/pdf",
-                        ];
+                        if (selectedFile) {
+                          const allowedTypes = [
+                            "image/jpeg",
+                            "image/png",
+                            "application/pdf",
+                          ];
 
-                        if (!allowedTypes.includes(selectedFile.type)) {
-                          toast({
-                            title: "Invalid file type",
-                            description:
-                              "Only JPEG, PNG, and PDF files are allowed.",
-                            variant: "destructive",
-                          });
-                          return;
+                          if (!allowedTypes.includes(selectedFile.type)) {
+                            toast({
+                              title: "Invalid file type",
+                              description:
+                                "Only JPEG, PNG, and PDF files are allowed.",
+                              variant: "destructive",
+                            });
+                            return;
+                          }
                         }
+
+                        setFile(selectedFile);
+                      }}
+                      className="sr-only"
+                      id="file-upload"
+                      aria-label="Upload file"
+                      tabIndex={-1}
+                    />
+                  </Button>
+                  <Textarea
+                    placeholder="Message digibuddy"
+                    ref={textareaRef}
+                    name="message"
+                    rows={1}
+                    id="message"
+                    value={input}
+                    onChange={(e) => {
+                      setInput(e.target.value);
+                      adjustTextareaHeight();
+                    }}
+                    onKeyDown={(e) => {
+                      if (isListening) {
+                        stopListening();
                       }
 
-                      setFile(selectedFile);
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        e.currentTarget.form?.dispatchEvent(
+                          new Event("submit", {
+                            cancelable: true,
+                            bubbles: true,
+                          })
+                        );
+                      }
                     }}
-                    className="sr-only"
-                    id="file-upload"
-                    aria-label="Upload file"
-                    tabIndex={-1}
+                    className="min-h-4 rounded-2xl resize-none border-none shadow-none"
                   />
-                </Button>
-                <Textarea
-                  placeholder="Message digibuddy"
-                  ref={textareaRef}
-                  name="message"
-                  rows={1}
-                  id="message"
-                  value={input}
-                  onChange={(e) => {
-                    setInput(e.target.value);
-                    adjustTextareaHeight();
-                  }}
-                  onKeyDown={(e) => {
-                    if (isListening) {
-                      stopListening();
-                    }
-
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      e.currentTarget.form?.dispatchEvent(
-                        new Event("submit", {
-                          cancelable: true,
-                          bubbles: true,
-                        })
-                      );
-                    }
-                  }}
-                  className="min-h-4 rounded-2xl resize-none border-none shadow-none"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="text-muted-foreground hover:text-foreground hover:bg-muted-hover"
-                  onClick={isListening ? stopListening : startListening}
-                  disabled={isPending}
-                >
-                  {isListening ? (
-                    <>
-                      <X className="h-5 w-5" />
-                      <span className="sr-only">Stop Listening</span>
-                    </>
-                  ) : (
-                    <>
-                      <Mic className="h-5 w-5" />
-                      <span className="sr-only">Start Listening</span>
-                    </>
-                  )}
-                  <span className="sr-only">Voice Message</span>
-                </Button>
-                <Button
-                  type="submit"
-                  variant="ghost"
-                  size="icon"
-                  className="text-muted-foreground hover:text-foreground hover:bg-muted-hover"
-                  disabled={isPending || !input.trim() || isStreaming}
-                >
-                  <ArrowUp className="h-5 w-5" />
-                  <span className="sr-only">Send</span>
-                </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="text-muted-foreground hover:text-foreground hover:bg-muted-hover"
+                    onClick={isListening ? stopListening : startListening}
+                    disabled={isPending}
+                  >
+                    {isListening ? (
+                      <>
+                        <X className="h-5 w-5" />
+                        <span className="sr-only">Stop Listening</span>
+                      </>
+                    ) : (
+                      <>
+                        <Mic className="h-5 w-5" />
+                        <span className="sr-only">Start Listening</span>
+                      </>
+                    )}
+                    <span className="sr-only">Voice Message</span>
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="ghost"
+                    size="icon"
+                    className="text-muted-foreground hover:text-foreground hover:bg-muted-hover"
+                    disabled={isPending || !input.trim() || isStreaming}
+                  >
+                    <ArrowUp className="h-5 w-5" />
+                    <span className="sr-only">Send</span>
+                  </Button>
+                </div>
               </div>
             </div>
           </form>
+          {size && size.width !== null && size.width > 768 && !hasMessages && (
+            <TagList
+              onQuestionSelect={(question) => {
+                setInput(question);
+                if (textareaRef.current) {
+                  textareaRef.current.value = question;
+                  adjustTextareaHeight();
+                }
+              }}
+            />
+          )}
         </div>
         <div className="justify-end">
           <p className="text-[0.55rem] md:text-xs font-medium text-center text-muted-foreground mt-4">
