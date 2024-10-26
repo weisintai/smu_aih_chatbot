@@ -133,20 +133,15 @@ const DialogflowForm: React.FC = () => {
 
       if (data.event === "interimTranscription") {
         // Update interim transcript
-        // setInterimTranscript(data.transcript);
         console.log("Interim:", data.transcript);
       } else if (data.event === "finalTranscription") {
         // Append final transcript and clear interim
         // setFinalTranscript((prev) => prev + " " + data.transcript);
         // setInterimTranscript("");
 
-        // TODO: Add final transcript to input field
         setInput((prev) => {
-          if (prev.trim()) {
-            return prev + " " + data.transcript;
-          } else {
-            return data.transcript;
-          }
+          const newInput = prev ? `${prev}${data.transcript}` : data.transcript;
+          return newInput.trim();
         });
       }
     }
@@ -241,8 +236,6 @@ const DialogflowForm: React.FC = () => {
     workletNodeRef.current = null;
     audioContextRef.current = null;
     mediaStreamRef.current = null;
-
-    // TODO: If no final and interim transcript is not empty, add it to input field if stopped listening
   }, [ws]);
 
   // Form submission logic
@@ -250,6 +243,10 @@ const DialogflowForm: React.FC = () => {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (isPending || !input.trim() || isStreaming) return;
+
+    if (isListening) {
+      stopListening();
+    }
 
     setHasFile(!!file);
 
@@ -326,7 +323,7 @@ const DialogflowForm: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen p-4">
+    <div className="flex flex-col max-h-dvh h-dvh p-4">
       <div
         className={`w-full grid bg-background grid-rows-1 grid-cols-1 justify-center h-full ${
           hasMessages || isPending ? "justify-between" : "items-center"
@@ -344,7 +341,7 @@ const DialogflowForm: React.FC = () => {
         <div className="max-w-3xl w-full mx-auto flex flex-col gap-1.5 bg-background">
           {!hasMessages && !isPending && (
             <GradualSpacing
-              className="md:!text-4xl text-xl mb-4 md:-tracking-widest tracking-[-.2em] font-bold "
+              className="md:!text-4xl text-xl mb-4 md:-tracking-widest tracking-[-.23em] font-bold "
               text="Welcome. Ask me anything"
             />
           )}
@@ -483,17 +480,17 @@ const DialogflowForm: React.FC = () => {
           </form>
         </div>
         <div className="justify-end">
-          <p className="text-xs font-medium text-center text-muted-foreground mt-4">
+          <p className="text-[0.55rem] md:text-xs font-medium text-center text-muted-foreground mt-4">
             digibuddy can make mistakes. Consider checking important
             information.
           </p>
 
           {hasMessages && (
             <>
-              <p className="text-[0.7rem] font-medium text-center text-muted-foreground/80 mt-1">
+              <p className="text-[0.5rem] md:text-[0.7rem] font-medium text-center text-muted-foreground/80 mt-1">
                 Chat clears after 30 minutes of inactivity.
               </p>
-              <div className="w-full flex justify-center">
+              <div className="fixed top-2 right-2">
                 <ResetConversationButton
                   onReset={resetConversation}
                   isPending={isPending}
