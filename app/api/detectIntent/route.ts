@@ -183,7 +183,7 @@ Remember these pointers when crafting your response:
 - no need to ask follow-up questions if the vertex AI response already covers the query well
 - if agent response contains phone numbers or email addresses, please keep them
 
-Response in user query's language (IMPORTANT), with a slight Singapore local touch (where appropriate, no need to force it in every response), 
+Response in user query's language (IMPORTANT), with a casual and friendly manner (where appropriate, no need to force it in every response), 
 and must keep it short and concise as it is for migrant workers. (Best to keep it within 1-2 sentences)
 `;
 
