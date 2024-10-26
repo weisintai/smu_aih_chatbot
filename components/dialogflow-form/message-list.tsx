@@ -5,6 +5,7 @@ import Markdown from "react-markdown";
 import { TextToSpeechButton } from "@/components/dialogflow-form/text-to-speech-button";
 import { Avatar, AvatarFallback } from "@radix-ui/react-avatar";
 import { Paperclip } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface MessageListProps {
   messages: Message[];
@@ -34,18 +35,20 @@ export const MessageList: React.FC<MessageListProps> = ({
   const messageContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (scrollRef.current) {
+      scrollRef.current.scrollIntoView({ behavior: "smooth" });
+    }
   }, [messages, isPending]);
 
   useEffect(() => {
-    if (isStreaming) {
-      messageContainerRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (isStreaming && messageContainerRef.current) {
+      messageContainerRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [isStreaming, streamingMessage]);
 
   return (
-    <div className="flex-grow overflow-y-auto w-full">
-      <div className="flex flex-col items-start gap-8 pb-10 min-h-[75vh] sm:w-[95%]">
+    <ScrollArea className="flex-grow w-full h-[75vh]">
+      <div className="flex flex-col items-start gap-8 pb-10 sm:w-[95%]">
         {messages.map((message, index) => {
           return index !== messages.length - 1 ? (
             <div
@@ -98,7 +101,9 @@ export const MessageList: React.FC<MessageListProps> = ({
           </span>
         }
       </div>
-      <div ref={scrollRef}></div>
-    </div>
+      <div ref={scrollRef} />
+    </ScrollArea>
   );
 };
+
+export default MessageList;
