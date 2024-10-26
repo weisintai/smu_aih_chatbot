@@ -11,6 +11,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { RefreshCcw } from "lucide-react";
 
 interface ResetConversationButtonProps {
   onReset: () => void;
@@ -23,13 +24,8 @@ export const ResetConversationButton: React.FC<
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="self-center "
-          disabled={isPending}
-        >
-          Reset conversation
+        <Button variant="secondary" size="icon" disabled={isPending}>
+          <RefreshCcw className="h-4 w-4" />
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
