@@ -33,7 +33,7 @@ const tags = [
       "How to spot common scams targeting workers?",
       "What to do if someone asks for my bank details?",
       "Where to report if I've been scammed?",
-      "Is this job offer legitimate?",
+      "Should I give my bank account number and password to MOM or police?",
     ],
   },
   {
@@ -41,10 +41,10 @@ const tags = [
     label: "Banking Help",
     color: "#2563EB",
     questions: [
-      "How to open a bank account in Singapore?",
-      "What documents do I need for banking?",
-      "How to use ATM safely?",
-      "How to check my account balance?",
+      "How to remit money online?",
+      "How to update my information in the digibank app?",
+      "How to apply for card replacement online? ",
+      "How to log in digibank app if I forgot the password?",
     ],
   },
   {
