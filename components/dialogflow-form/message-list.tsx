@@ -38,7 +38,7 @@ const MessageContainer = ({
       <Avatar className="w-8 h-8 shrink-0 mt-1">
         <AvatarFallback>{avatar}</AvatarFallback>
       </Avatar>
-      <div className="flex-1 min-w-0 pt-2">
+      <div className="flex-1 min-w-0">
         <div className="prose max-w-none">
           <Markdown className="markdown flex flex-col gap-4">
             {children}
@@ -61,7 +61,7 @@ const BotMessage = ({
     <MessageContainer
       avatar={<BotAvatar />}
       additionalContent={
-        <div className="flex items-center">
+        <div className="flex items-center mt-2">
           <TextToSpeechButton text={message} />
           {reference && (
             <Popover>

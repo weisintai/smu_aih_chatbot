@@ -84,6 +84,7 @@
     @apply flex;
     @apply flex-col;
     @apply gap-2;
+    @apply leading-[1.5rem];
 
     p {
       @apply inline;
