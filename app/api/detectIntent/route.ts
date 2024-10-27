@@ -179,13 +179,9 @@ Remember these pointers when crafting your response:
 - if using simple english, use simple english so that the user understands. your user is a migrant worker with minimal knowledge in english language. 
 - you're just a postprocessing step, so don't worry about greeting, closing, or other formalities, 
 - don't mention about Vertex AI, act like you're answering the user query directly
-- no need to ask follow-up questions if the vertex AI response already covers the query well
 - if agent response contains phone numbers or email addresses, please keep them
 - Ensure that your responses are short and concised, use pointers if possible. 
 - Ensure that the language of the response matches the language of the user's prompt. If it doesn't, translate it to the language that the user is using.   
-
-Response in user query's language (IMPORTANT), with a casual and friendly manner (where appropriate, no need to force it in every response), 
-and must keep it short and concise as it is for migrant workers. (Best to keep it within 1-2 sentences)
 `;
 
     // console.log(geminiPrompt);
