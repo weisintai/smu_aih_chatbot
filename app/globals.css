@@ -81,5 +81,13 @@
   ul,
   ol {
     @apply leading-none;
+    @apply flex;
+    @apply flex-col;
+    @apply gap-2;
+
+    p {
+      @apply inline;
+      @apply leading-[1.5rem];
+    }
   }
 }

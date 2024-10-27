@@ -9,11 +9,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { BotAvatar } from "@/components/dialogflow-form/bot-avatar";
 import { UserAvatar } from "./user-avatar";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface MessageListProps {
   messages: Message[];
@@ -41,7 +40,9 @@ const MessageContainer = ({
       </Avatar>
       <div className="flex-1 min-w-0 pt-2">
         <div className="prose max-w-none">
-          <Markdown>{children}</Markdown>
+          <Markdown className="markdown flex flex-col gap-4">
+            {children}
+          </Markdown>
         </div>
         {additionalContent}
       </div>
@@ -60,24 +61,23 @@ const BotMessage = ({
     <MessageContainer
       avatar={<BotAvatar />}
       additionalContent={
-        <>
+        <div className="flex items-center">
           <TextToSpeechButton text={message} />
           {reference && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger className="cursor-help">
-                  <Info
-                    size={16}
-                    className="text-slate-500 hover:text-slate-900 transition-colors"
-                  />
-                </TooltipTrigger>
-                <TooltipContent className="max-w-sm">
-                  <p className="text-sm">{reference}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <Popover>
+              <PopoverTrigger className="cursor-help">
+                <Info
+                  size={16}
+                  className="text-slate-500 hover:text-slate-900 transition-colors"
+                />
+              </PopoverTrigger>
+              <PopoverContent className="max-w-sm text-sm">
+                <strong>Vertex AI Response:</strong>
+                <p>{reference}</p>
+              </PopoverContent>
+            </Popover>
           )}
-        </>
+        </div>
       }
     >
       {message}
@@ -136,7 +136,7 @@ export const MessageList: React.FC<MessageListProps> = ({
   }, [isStreaming, streamingMessage]);
 
   return (
-    <ScrollArea className="flex-grow w-full h-[75vh]">
+    <ScrollArea className="flex-grow w-full h-[85dvh]">
       <div className="flex flex-col gap-8 pb-10 sm:w-[95%]">
         {messages.map((message, index) => {
           return index !== messages.length - 1 ? (
