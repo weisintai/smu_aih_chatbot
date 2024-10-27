@@ -68,6 +68,10 @@
 }
 
 .markdown {
+  a {
+    @apply text-primary underline;
+  }
+
   ul {
     @apply list-disc;
     @apply list-inside;

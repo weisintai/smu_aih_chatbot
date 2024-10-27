@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from "react";
 import { Message } from "./types";
 import { LoadingSpinner } from "../loading-spinner";
-import Markdown from "react-markdown";
+import Markdown, { Components } from "react-markdown";
 import { TextToSpeechButton } from "@/components/dialogflow-form/text-to-speech-button";
 import { Avatar, AvatarFallback } from "@radix-ui/react-avatar";
 import { Info, Paperclip } from "lucide-react";
@@ -28,19 +28,59 @@ interface MessageContainerProps {
   additionalContent?: React.ReactNode;
 }
 
+interface CustomLinkProps {
+  href?: string;
+  children?: React.ReactNode;
+}
+
 const MessageContainer = ({
   children,
   avatar,
   additionalContent,
 }: MessageContainerProps) => {
+  const formatUrl = (href: string): string => {
+    let url = href.trim();
+
+    // Add https:// if no protocol exists
+    if (!url.startsWith("http")) {
+      url = `https://${url}`;
+    }
+
+    // Add www. if it doesn't exist and isn't a subdomain
+    if (!url.includes("www.")) {
+      url = url.replace("://", "://www.");
+    }
+
+    console.log(url);
+
+    return url;
+  };
+
+  const customLink: Components["a"] = ({ href, children }: CustomLinkProps) => {
+    if (!href) return null;
+
+    const formattedUrl = formatUrl(href);
+
+    return (
+      <a href={formattedUrl} target="_blank" rel="noopener noreferrer">
+        {children}
+      </a>
+    );
+  };
+
   return (
     <div className="flex gap-2 items-start w-full flex-col">
       <Avatar className="w-8 h-8 shrink-0 mt-1">
         <AvatarFallback>{avatar}</AvatarFallback>
       </Avatar>
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 flex flex-col gap-2 min-w-0">
         <div className="prose max-w-none">
-          <Markdown className="markdown flex flex-col gap-4">
+          <Markdown
+            className="markdown flex flex-col gap-4"
+            components={{
+              a: customLink,
+            }}
+          >
             {children}
           </Markdown>
         </div>
@@ -61,7 +101,7 @@ const BotMessage = ({
     <MessageContainer
       avatar={<BotAvatar />}
       additionalContent={
-        <div className="flex items-center mt-2">
+        <div className="flex items-center">
           <TextToSpeechButton text={message} />
           {reference && (
             <Popover>
@@ -137,7 +177,7 @@ export const MessageList: React.FC<MessageListProps> = ({
 
   return (
     <ScrollArea className="flex-grow w-full h-[85dvh]">
-      <div className="flex flex-col gap-8 pb-10 sm:w-[95%]">
+      <div className="flex flex-col gap-8 pb-10 sm:w-[95%] pt-4">
         {messages.map((message, index) => {
           return index !== messages.length - 1 ? (
             <div key={index} className="w-full">
