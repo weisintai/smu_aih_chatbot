@@ -149,8 +149,6 @@ export async function POST(request: NextRequest) {
       (message) => message.text
     )?.text?.text?.[0];
 
-    console.log("Assistant response:", assistantMessage);
-
     const vertexAI = new VertexAI({
       project: PROJECT_ID,
       location: "us-central1",
@@ -214,21 +212,24 @@ and must keep it short and concise as it is for migrant workers. (Best to keep i
       geminiPrompt
     );
 
-    const contentResponse = await resp.response;
+    const geminiResponse = await resp.response;
 
     try {
       if (
         response.queryResult?.responseMessages?.[0]?.text?.text &&
-        contentResponse.candidates?.[0]?.content?.parts?.[0]?.text
+        geminiResponse.candidates?.[0]?.content?.parts?.[0]?.text
       ) {
-        response.queryResult.responseMessages[0].text.text[0] = contentResponse
+        response.queryResult.responseMessages[0].text.text[0] = geminiResponse
           .candidates[0].content.parts[0].text as string;
       }
     } catch (error) {
       console.error("Error updating response:", error);
     }
 
-    const nextResponse = NextResponse.json(response);
+    const nextResponse = NextResponse.json({
+      vertexAgentResponse: assistantMessage,
+      geminiResponse: geminiResponse.candidates?.[0]?.content?.parts?.[0]?.text,
+    });
 
     setSessionCookies(nextResponse, sessionId);
 

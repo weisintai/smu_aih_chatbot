@@ -1,9 +1,8 @@
-// types.ts
-
 export interface Message {
   role: "user" | "assistant";
   content: string;
   fileName?: string;
+  referenceMessage?: string;
 }
 
 export interface DetectIntentResponse {

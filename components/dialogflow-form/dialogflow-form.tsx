@@ -24,12 +24,7 @@ import { useWebSocket } from "next-ws/client";
 import { downsampleBuffer, getNextDelay } from "./utils";
 import TagList from "./tag-list";
 import { useWindowSize } from "@uidotdev/usehooks";
-
-interface Message {
-  role: "user" | "assistant";
-  content: string;
-  fileName?: string;
-}
+import { Message } from "./types";
 
 const STORAGE_KEY = "dialogflow_messages";
 const SESSION_EXPIRY_KEY = "dialogflow_session_expiry";
@@ -118,9 +113,12 @@ const DialogflowForm: React.FC = () => {
     }
   }, [isStreaming]);
 
-  const simulateStreaming = (message: string) => {
+  const simulateStreaming = (message: string, referenceMessage: string) => {
     setIsStreaming(true);
-    setMessages((prev) => [...prev, { role: "assistant", content: message }]);
+    setMessages((prev) => [
+      ...prev,
+      { role: "assistant", content: message, referenceMessage },
+    ]);
     const words = message.split(" ");
     let wordIndex = 0;
 
@@ -286,8 +284,7 @@ const DialogflowForm: React.FC = () => {
           const newExpiry = Date.now() + 30 * 60 * 1000; // 30 minutes from now
           localStorage.setItem(SESSION_EXPIRY_KEY, newExpiry.toString());
 
-          let assistantMessage =
-            response.queryResult.responseMessages[0]?.text?.text[0] || "";
+          let assistantMessage = response.geminiResponse;
 
           setMessages((prev) => [...prev, newMessage]);
 
@@ -298,7 +295,7 @@ const DialogflowForm: React.FC = () => {
             .replace(/^\s*\d+\.\s*/gm, "$&") // Clean up ordered list items
             .trim();
 
-          simulateStreaming(assistantMessage);
+          simulateStreaming(assistantMessage, response.vertexAgentResponse);
         },
         onError: (error) => {
           console.error("Error detecting intent:", error);

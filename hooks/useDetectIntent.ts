@@ -6,30 +6,9 @@ interface RequestData {
   file?: File;
 }
 
-interface DialogflowResponse {
-  responseId: string;
-  queryResult: {
-    text: string;
-    languageCode: string;
-    responseMessages: Array<{
-      text: {
-        text: string[];
-      };
-    }>;
-    intentDetectionConfidence: number;
-    diagnosticInfo: {
-      "Session Id": string;
-      "Response Id": string;
-    };
-    match: {
-      matchType: string;
-      confidence: number;
-    };
-    advancedSettings: {
-      loggingSettings: Record<string, unknown>;
-    };
-  };
-  responseType: string;
+export interface DialogflowResponse {
+  vertexAgentResponse: string;
+  geminiResponse: string;
 }
 
 const detectIntent = async (

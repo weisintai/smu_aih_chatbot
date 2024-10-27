@@ -4,10 +4,16 @@ import { LoadingSpinner } from "../loading-spinner";
 import Markdown from "react-markdown";
 import { TextToSpeechButton } from "@/components/dialogflow-form/text-to-speech-button";
 import { Avatar, AvatarFallback } from "@radix-ui/react-avatar";
-import { Paperclip } from "lucide-react";
+import { Info, Paperclip } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { BotAvatar } from "@/components/dialogflow-form/bot-avatar";
 import { UserAvatar } from "./user-avatar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface MessageListProps {
   messages: Message[];
@@ -43,11 +49,36 @@ const MessageContainer = ({
   );
 };
 
-const BotMessage = ({ message }: { message: string }) => {
+const BotMessage = ({
+  message,
+  reference,
+}: {
+  message: string;
+  reference?: string;
+}) => {
   return (
     <MessageContainer
       avatar={<BotAvatar />}
-      additionalContent={<TextToSpeechButton text={message} />}
+      additionalContent={
+        <>
+          <TextToSpeechButton text={message} />
+          {reference && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger className="cursor-help">
+                  <Info
+                    size={16}
+                    className="text-slate-500 hover:text-slate-900 transition-colors"
+                  />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-sm">
+                  <p className="text-sm">{reference}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+        </>
+      }
     >
       {message}
     </MessageContainer>
@@ -116,11 +147,20 @@ export const MessageList: React.FC<MessageListProps> = ({
                   fileName={message.fileName}
                 />
               ) : (
-                <BotMessage message={message.content} />
+                <BotMessage
+                  message={message.content}
+                  reference={message.referenceMessage}
+                />
               )}
             </div>
           ) : (
-            !isStreaming && <BotMessage message={message.content} key={index} />
+            !isStreaming && (
+              <BotMessage
+                message={message.content}
+                key={index}
+                reference={message.referenceMessage}
+              />
+            )
           );
         })}
         {isStreaming && (
