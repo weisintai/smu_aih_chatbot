@@ -352,7 +352,7 @@ const DialogflowForm: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col max-h-dvh h-dvh p-4">
+    <div className="flex flex-col max-h-dvh h-dvh px-4 pb-4">
       <div
         className={`w-full grid bg-background grid-rows-1 grid-cols-1 justify-center h-full ${
           hasMessages || isPending ? "justify-between" : "items-center"
