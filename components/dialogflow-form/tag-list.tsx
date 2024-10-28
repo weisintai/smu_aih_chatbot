@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Wallet,
@@ -75,8 +75,10 @@ const Tag = ({
   questions,
   onQuestionSelect,
 }: TagProps) => {
+  const [open, setOpen] = useState(false);
+
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           variant="ghost"
@@ -87,13 +89,14 @@ const Tag = ({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0" align="center">
-        <div className="bg-muted/30 rounded-lg overflow-hidden divide-y divide-border">
+        <div className="rounded-lg divide-y divide-border shadow-xl">
           {questions.map((question, index) => (
             <button
               key={index}
               className="w-full text-left px-4 py-3 hover:bg-muted/50 transition-colors text-sm"
               onClick={() => {
                 onQuestionSelect(question);
+                setOpen(false);
               }}
             >
               {question}
