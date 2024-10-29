@@ -25,6 +25,7 @@ import { downsampleBuffer, getNextDelay } from "./utils";
 import TagList from "./tag-list";
 import { useWindowSize } from "@uidotdev/usehooks";
 import { Message } from "./types";
+import BlurFade from "@/components/ui/blur-fade";
 
 const STORAGE_KEY = "dialogflow_messages";
 const SESSION_EXPIRY_KEY = "dialogflow_session_expiry";
@@ -277,7 +278,16 @@ const DialogflowForm: React.FC = () => {
     });
 
     mutate(
-      { query: input, file: file ?? undefined },
+      {
+        history: messages.map((message) => {
+          return {
+            role: message.role,
+            message: message.content,
+          };
+        }),
+        query: input,
+        file: file ?? undefined,
+      },
       {
         onSuccess: (response) => {
           // Update session expiry
@@ -371,23 +381,25 @@ const DialogflowForm: React.FC = () => {
           {!hasMessages && !isPending && (
             <div className="gap-1.5 flex flex-col my-auto md:my-0">
               <GradualSpacing
-                className="md:!text-4xl text-xl mb-4 md:-tracking-widest tracking-[-.23em] font-bold "
-                text={`${getTimeBasedGreeting()}! Ask me anything`}
+                className="md:!text-4xl text-xl mb-4 md:mb-0 md:-tracking-widest tracking-[-.23em] font-bold "
+                text={`${getTimeBasedGreeting()}! How can I help you today?`}
               />
               {size &&
                 size.width !== null &&
                 size.width <= 768 &&
                 !hasMessages &&
                 !isPending && (
-                  <TagList
-                    onQuestionSelect={(question) => {
-                      setInput(question);
-                      if (textareaRef.current) {
-                        textareaRef.current.value = question;
-                        adjustTextareaHeight();
-                      }
-                    }}
-                  />
+                  <BlurFade delay={0.25} inView>
+                    <TagList
+                      onQuestionSelect={(question) => {
+                        setInput(question);
+                        if (textareaRef.current) {
+                          textareaRef.current.value = question;
+                          adjustTextareaHeight();
+                        }
+                      }}
+                    />
+                  </BlurFade>
                 )}
             </div>
           )}
@@ -536,15 +548,17 @@ const DialogflowForm: React.FC = () => {
             size.width > 768 &&
             !hasMessages &&
             !isPending && (
-              <TagList
-                onQuestionSelect={(question) => {
-                  setInput(question);
-                  if (textareaRef.current) {
-                    textareaRef.current.value = question;
-                    adjustTextareaHeight();
-                  }
-                }}
-              />
+              <BlurFade delay={0.25} inView>
+                <TagList
+                  onQuestionSelect={(question) => {
+                    setInput(question);
+                    if (textareaRef.current) {
+                      textareaRef.current.value = question;
+                      adjustTextareaHeight();
+                    }
+                  }}
+                />
+              </BlurFade>
             )}
         </div>
         <div className="justify-end">

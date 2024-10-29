@@ -2,6 +2,10 @@ import { useMutation, UseMutationResult } from "@tanstack/react-query";
 import ky from "ky";
 
 interface RequestData {
+  history: {
+    role: string;
+    message: string;
+  }[];
   query: string;
   file?: File;
 }
@@ -17,6 +21,7 @@ const detectIntent = async (
   const formData = new FormData();
 
   formData.append("query", requestData.query);
+  formData.append("history", JSON.stringify(requestData.history));
 
   if (requestData.file) {
     const allowedTypes = ["image/jpeg", "image/png", "application/pdf"];

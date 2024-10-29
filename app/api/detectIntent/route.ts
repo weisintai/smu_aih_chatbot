@@ -15,11 +15,84 @@ import {
   LANGUAGE_CODE,
   SUBDOMAIN_REGION,
 } from "@/utils/constants";
-import { VertexAI } from "@google-cloud/vertexai";
+import { VertexAI, GenerativeModel } from "@google-cloud/vertexai";
+
+interface ConversationContext {
+  summary: string;
+  recentMessages: ChatHistory[];
+  keyTopics: string[];
+  userPreferences?: Record<string, string>;
+}
+
+const generateEnhancedContext = async (
+  history: ChatHistory[],
+  generativeModel: GenerativeModel
+): Promise<ConversationContext> => {
+  const contextPrompt = `
+Analyze this conversation and provide:
+1. A brief summary of the key points
+2. The main topics discussed
+3. Any user preferences or important details revealed (only based on the user's messages, don't infer from the assistant's messages)
+4. Don't include anything about language or translation
+
+Conversation:
+${history.map((chat) => `${chat.role}: ${chat.message}`).join("\n")}
+
+Provide the analysis in JSON format with these keys: "summary", "keyTopics", "userPreferences"
+`;
+
+  try {
+    const analysisResponse = await generativeModel.generateContent(
+      contextPrompt
+    );
+
+    const analysis =
+      analysisResponse.response.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    console.log(analysis);
+
+    if (!analysis) {
+      throw new Error("Analysis not generated");
+    }
+
+    const jsonMatch = analysis.match(/\{[\s\S]*\}/); // Matches everything between { and }
+    if (!jsonMatch) {
+      throw new Error("Analysis not in JSON format");
+    }
+
+    const { summary, keyTopics, userPreferences } = JSON.parse(jsonMatch[0]);
+
+    return {
+      summary,
+      recentMessages: history,
+      keyTopics,
+      userPreferences,
+    };
+  } catch (error) {
+    console.error("Error generating enhanced context:", error);
+    return {
+      summary: "",
+      recentMessages: history.slice(-3),
+      keyTopics: [],
+    };
+  }
+};
+
+const formatRecentHistory = (history: ChatHistory[]) => {
+  return history
+    .map((chat) => `* **${chat.role}:** "${chat.message.trim()}"`)
+    .join("\n");
+};
 
 interface RequestData {
   query: string;
   file?: File;
+  history: string;
+}
+
+interface ChatHistory {
+  role: string;
+  message: string;
 }
 
 export async function POST(request: NextRequest) {
@@ -35,6 +108,9 @@ export async function POST(request: NextRequest) {
 
   const { file } = body as unknown as RequestData;
   let { query } = body as unknown as RequestData;
+  const { history } = body as unknown as RequestData;
+
+  const parsedHistory: ChatHistory[] = JSON.parse(history);
 
   if (!query && !file) {
     return NextResponse.json({ error: "Query is required" }, { status: 400 });
@@ -158,17 +234,45 @@ export async function POST(request: NextRequest) {
       model: "gemini-1.5-flash-002",
     });
 
+    let context: ConversationContext | null = null;
+
+    if (parsedHistory.length > 0) {
+      context = await generateEnhancedContext(parsedHistory, generativeModel);
+    }
+
     const geminiPrompt = `
-    **Prompt:**
+${
+  !!context
+    ? `**Conversation Context:**
+${context.summary}
 
-**User Query:** "${query}"
+**Key Topics:** ${context.keyTopics.join(", ")}
 
-**Vertex AI Agent Response:**
+**Recent Messages:**
+${formatRecentHistory(context.recentMessages)}
 
-${assistantMessage || ""}
+`
+    : ""
+}
 
-**Instructions:**
-With reference from the response from Vertex AI Agent, answer the user query (do not trust the response fully, make your own judgement, and combine it with the response from Vertex AI Agent if it makes sense).
+**User Query**: "${query}"
+**Vertex AI Agent Response**:
+"${assistantMessage || ""}"
+
+${
+  !!context
+    ? `**Instructions**:
+Consider the conversation context and key topics above when responding. 
+${
+  context.userPreferences
+    ? `Note these user preferences: ${JSON.stringify(context.userPreferences)}`
+    : ""
+}`
+    : ""
+}
+
+With reference from the response from Vertex AI Agent and the chat history, answer the user query
+(if the response from Vertex AI Agent is too bad, make your own judgement, and combine it with the response from Vertex AI Agent if it makes sense).
 
 Remember these pointers when crafting your response:
 - empathetic reflections of user concerns, followed by clear, fact-supported responses
@@ -180,37 +284,31 @@ Remember these pointers when crafting your response:
 - you're just a postprocessing step, so don't worry about greeting, closing, or other formalities, 
 - don't mention about Vertex AI, act like you're answering the user query directly
 - if agent response contains phone numbers or email addresses, please keep them
+- for website links, no bare URLs
+  * Use format: [link text](https://example.com)
 - Ensure that your responses are short and concised, use pointers if possible. 
 - Keep in mind that you are serving migrant workers who are using the DBS bank. DBS is the only bank in Singapore which is actively serving migrant workers. Do not talk about other bank as majority of the migrant workers do not have a bank account in other banks. 
 - Ensure that the language of the response matches the language of the user's prompt. If it doesn't, translate it to the language that the user is using.
 - Strip out any content or information that is not relevant to Singapore, and replace it with relevant information.
+- Don't include information from the context that's not remotely related to the user query or the agent response.
+- Ask guiding questions to provide user with information they might need, based on the query and Vertex AI Agent response. (Maximum 1 question)
+
+You're talking to migrant workers - keep everything simple and direct!
+- Use simple words and short sentences
+- Aim for grade level 5-6 (suitable for 10-12 year olds)
+- Break complex ideas into simple steps
+- Use active voice
+- Avoid technical jargon
+- Use everyday examples
+- Keep sentences under 15 words when possible
+- Use bullet points for lists
+- Include spaces between ideas
+- Explain any necessary complex terms
 `;
 
-    // console.log(geminiPrompt);
+    console.log(`Approximately ${geminiPrompt.length / 4} tokens`);
 
-    const resp = await generativeModel.generateContent(
-      // base64File && fileType
-      //   ? {
-      //       contents: [
-      //         {
-      //           role: "user",
-      //           parts: [
-      //             {
-      //               inlineData: {
-      //                 data: base64File,
-      //                 mimeType: fileType.mime,
-      //               },
-      //             },
-      //             {
-      //               text: geminiPrompt,
-      //             },
-      //           ],
-      //         },
-      //       ],
-      //     }
-      // :
-      geminiPrompt
-    );
+    const resp = await generativeModel.generateContent(geminiPrompt);
 
     const geminiResponse = await resp.response;
 
