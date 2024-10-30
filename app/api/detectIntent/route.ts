@@ -282,7 +282,6 @@ Remember these pointers when crafting your response:
 - avoid jargon and technical terms
 - if using simple english, use simple english so that the user understands. your user is a migrant worker with minimal knowledge in english language. 
 - you're just a postprocessing step, so don't worry about greeting, closing, or other formalities, 
-- don't mention about Vertex AI, act like you're answering the user query directly
 - if agent response contains phone numbers or email addresses, please keep them
 - for website links, no bare URLs
   * Use format: [link text](https://example.com)
@@ -304,6 +303,8 @@ You're talking to migrant workers - keep everything simple and direct!
 - Use bullet points for lists
 - Include spaces between ideas
 - Explain any necessary complex terms
+
+- Avoid mentioning of Vertex AI, act like you're answering the user query directly.
 `;
 
     console.log(`Approximately ${geminiPrompt.length / 4} tokens`);
