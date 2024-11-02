@@ -49,7 +49,7 @@ Provide the analysis in JSON format with these keys: "summary", "keyTopics", "us
     const analysis =
       analysisResponse.response.candidates?.[0]?.content?.parts?.[0]?.text;
 
-    console.log(analysis);
+    // console.log(analysis);
 
     if (!analysis) {
       throw new Error("Analysis not generated");
@@ -310,7 +310,7 @@ You're talking to migrant workers - keep everything simple and direct!
 - Avoid mentioning of Vertex AI, act like you're answering the user query directly.
 `;
 
-    console.log(`Approximately ${geminiPrompt.length / 4} tokens`);
+    // console.log(`Approximately ${geminiPrompt.length / 4} tokens`);
 
     const resp = await generativeModel.generateContent(geminiPrompt);
 

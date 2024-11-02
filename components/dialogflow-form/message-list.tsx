@@ -51,8 +51,6 @@ const MessageContainer = ({
       url = url.replace("://", "://www.");
     }
 
-    console.log(url);
-
     return url;
   };
 
