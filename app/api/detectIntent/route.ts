@@ -22,23 +22,53 @@ interface ConversationContext {
   recentMessages: ChatHistory[];
   keyTopics: string[];
   userPreferences?: Record<string, string>;
+  enhancedQuery?: string;
 }
 
 const generateEnhancedContext = async (
+  currentQuery: string,
   history: ChatHistory[],
   generativeModel: GenerativeModel
 ): Promise<ConversationContext> => {
   const contextPrompt = `
+  Conversation:
+
 Analyze this conversation and provide:
 1. A brief summary of the key points
 2. The main topics discussed
 3. Any user preferences or important details revealed (only based on the user's messages, don't infer from the assistant's messages)
 4. Don't include anything about language or translation
+5. Current user query: ${currentQuery}. History: ${
+    history.filter((h) => h.role === "assistant").at(-1)?.message
+  }
+   * Enhance the query by considering TWO sources:
+     1. The exact words/phrases from the current query (primary source)
+     2. Only directly relevant context from the latest message
+        
+   * Rules for enhancement:
+     - Keep 90% of the original query intact
+     - Only add context if it's explicitly referenced in both the current query AND latest message
+     - Maintain the exact same intent/goal
+     - Match the original tone (positive/negative/neutral)
+   * Write from first-person perspective as if you are the user
+   * Do NOT:
+     - Add context that only appears in the history but not in current query
+     - Change the core request
+     - Pull in outside information
+     - Modify the original meaning
+    Example:
+    History: You want a plan to pay back your $2000 loan? That's good!
 
-Conversation:
-${history.map((chat) => `${chat.role}: ${chat.message}`).join("\n")}
+It's tricky with only $100 savings a month.
 
-Provide the analysis in JSON format with these keys: "summary", "keyTopics", "userPreferences"
+Talk to the moneylenders. Ask about the total cost. This means the total money you need to pay back, including interest and fees.
+Ask about monthly payments. Is this more than your $100 savings?
+Ask what happens if you miss a payment. This is very important!
+Before you borrow, make sure you can pay back the loan. Can you think of ways to increase your savings?
+    Current Query: nope
+    Enhanced: I could not think about ways to increase my savings. Can you help me with that?
+
+Provide the analysis in JSON format with these keys: "summary", "keyTopics", "userPreferences", "enhancedQuery"
 `;
 
   try {
@@ -60,13 +90,16 @@ Provide the analysis in JSON format with these keys: "summary", "keyTopics", "us
       throw new Error("Analysis not in JSON format");
     }
 
-    const { summary, keyTopics, userPreferences } = JSON.parse(jsonMatch[0]);
+    const { summary, keyTopics, userPreferences, enhancedQuery } = JSON.parse(
+      jsonMatch[0]
+    );
 
     return {
       summary,
       recentMessages: history,
       keyTopics,
       userPreferences,
+      enhancedQuery,
     };
   } catch (error) {
     console.error("Error generating enhanced context:", error);
@@ -208,23 +241,6 @@ export async function POST(request: NextRequest) {
       sessionId
     );
 
-    const request: protos.google.cloud.dialogflow.cx.v3.IDetectIntentRequest = {
-      session: sessionPath,
-      queryInput: {
-        text: {
-          text: query,
-        },
-
-        languageCode: LANGUAGE_CODE,
-      },
-    };
-
-    const [response] = await sessionClient.detectIntent(request);
-
-    const assistantMessage = response.queryResult?.responseMessages?.find(
-      (message) => message.text
-    )?.text?.text?.[0];
-
     const vertexAI = new VertexAI({
       project: PROJECT_ID,
       location: "us-central1",
@@ -237,8 +253,31 @@ export async function POST(request: NextRequest) {
     let context: ConversationContext | null = null;
 
     if (parsedHistory.length > 0) {
-      context = await generateEnhancedContext(parsedHistory, generativeModel);
+      context = await generateEnhancedContext(
+        query,
+        parsedHistory,
+        generativeModel
+      );
     }
+
+    const request: protos.google.cloud.dialogflow.cx.v3.IDetectIntentRequest = {
+      session: sessionPath,
+      queryInput: {
+        text: {
+          text: context?.enhancedQuery || query,
+        },
+
+        languageCode: LANGUAGE_CODE,
+      },
+    };
+
+    console.log(context);
+
+    const [response] = await sessionClient.detectIntent(request);
+
+    const assistantMessage = response.queryResult?.responseMessages?.find(
+      (message) => message.text
+    )?.text?.text?.[0];
 
     const geminiPrompt = `
 ${
