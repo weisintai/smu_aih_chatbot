@@ -46,11 +46,6 @@ const MessageContainer = ({
       url = `https://${url}`;
     }
 
-    // Add www. if it doesn't exist and isn't a subdomain
-    if (!url.includes("www.")) {
-      url = url.replace("://", "://www.");
-    }
-
     return url;
   };
 
