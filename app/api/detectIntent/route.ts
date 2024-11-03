@@ -31,44 +31,63 @@ const generateEnhancedContext = async (
   generativeModel: GenerativeModel
 ): Promise<ConversationContext> => {
   const contextPrompt = `
-  Conversation:
+Conversation Analysis Instructions:
 
-Analyze this conversation and provide:
-1. A brief summary of the key points
-2. The main topics discussed
-3. Any user preferences or important details revealed (only based on the user's messages, don't infer from the assistant's messages)
-4. Don't include anything about language or translation
-5. Current user query: ${currentQuery}. History: ${
-    history.filter((h) => h.role === "assistant").at(-1)?.message
-  }
-   * Enhance the query by considering TWO sources:
-     1. The exact words/phrases from the current query (primary source)
-     2. Only directly relevant context from the latest message
-        
-   * Rules for enhancement:
-     - Keep 90% of the original query intact
-     - Only add context if it's explicitly referenced in both the current query AND latest message
-     - Maintain the exact same intent/goal
-     - Match the original tone (positive/negative/neutral)
-   * Write from first-person perspective as if you are the user
-   * Do NOT:
-     - Add context that only appears in the history but not in current query
-     - Change the core request
-     - Pull in outside information
-     - Modify the original meaning
-    Example:
-    History: You want a plan to pay back your $2000 loan? That's good!
+{
+  "format": "Provide analysis in JSON with keys: summary, keyTopics, userPreferences, enhancedQuery",
+  
+  "analysisRules": [
+    "1. Brief summary of key points",
+    "2. Main topics discussed",
+    "3. User preferences/details (only from user messages)",
+    "4. Exclude language/translation notes",
+    "5. Enhanced query construction"
+  ],
 
-It's tricky with only $100 savings a month.
+  "queryEnhancement": {
+    "sources": [
+      "Current query: ${currentQuery}",
+      "Previous assistant message: ${
+        history.filter((h) => h.role === "assistant").at(-1)?.message
+      }"
+    ],
+    "rules": [
+      "Keep 90% of original query intact",
+      "Only add context present in both sources",
+      "Match original intent and tone",
+      "Write in first-person as user"
+    ],
+    "avoid": [
+      "Context only from history",
+      "Changing core request",
+      "Adding outside information",
+      "Modifying original meaning",
+      "Adding unrelated questions"
+    ]
+  },
 
-Talk to the moneylenders. Ask about the total cost. This means the total money you need to pay back, including interest and fees.
-Ask about monthly payments. Is this more than your $100 savings?
-Ask what happens if you miss a payment. This is very important!
-Before you borrow, make sure you can pay back the loan. Can you think of ways to increase your savings?
-    Current Query: nope
-    Enhanced: I could not think about ways to increase my savings. Can you help me with that?
-
-Provide the analysis in JSON format with these keys: "summary", "keyTopics", "userPreferences", "enhancedQuery"
+  "example": [
+      {
+      "previousMessage": "You want a plan to pay back your $2000 loan? That's good!
+        It's tricky with only $100 savings a month.
+        Talk to the moneylenders. Ask about the total cost. This means the total money you need to pay back, including interest and fees.
+        Ask about monthly payments. Is this more than your $100 savings?
+        Ask what happens if you miss a payment. This is very important!
+        Before you borrow, make sure you can pay back the loan. Can you think of ways to increase your savings?",
+      "currentQuery": "nope",
+      "enhancedQuery": "I could not think about ways to increase my savings. Can you help me with that?"
+    },
+    {
+      "previousMessage": "Okay, no problem! To send money from your DBS app to OCBC, you need two things:
+        The OCBC account number
+        The amount of money you want to send
+        You can't do it without these. The DBS app will guide you after you have this information.
+        Do you have a way to get the OCBC account number and the amount you want to send?",
+      "currentQuery": "not really",
+      "enhancedQuery": "I don't have a way to get the OCBC account number and the amount I want to send. What should I do?"
+    }
+  ]
+}
 `;
 
   try {
@@ -271,7 +290,7 @@ export async function POST(request: NextRequest) {
       },
     };
 
-    console.log(context);
+    // console.log(context);
 
     const [response] = await sessionClient.detectIntent(request);
 
@@ -311,28 +330,42 @@ ${
 }
 
 With reference from the response from Vertex AI Agent and the chat history, answer the user query
-(if the response from Vertex AI Agent is too bad, make your own judgement, and combine it with the response from Vertex AI Agent if it makes sense).
+Response Guidelines:
 
-Remember these pointers when crafting your response:
-- empathetic reflections of user concerns, followed by clear, fact-supported responses
-- friendly and informal communication style
-- match the personality and tone to the user's query
-- include humor where appropriate
-- avoid jargon and technical terms
-- if using simple english, use simple english so that the user understands. your user is a migrant worker with minimal knowledge in english language. 
-- you're just a postprocessing step, so don't worry about greeting, closing, or other formalities, 
-- if agent response contains phone numbers or email addresses, please keep them
-- for website links, no bare URLs
-  * Use format: [link text](https://example.com)
-- Ensure that your responses are short and concised, use pointers if possible. 
-- Keep in mind that you are serving migrant workers who are using the DBS bank. DBS is the only bank in Singapore which is actively serving migrant workers. Do not talk about other bank as majority of the migrant workers do not have a bank account in other banks. 
-- Ensure that the language of the response matches the language of the user's prompt. If it doesn't, translate it to the language that the user is using.
-- Strip out any content or information that is not relevant to Singapore, and replace it with relevant information.
-- Don't include information from the context that's not remotely related to the user query or the agent response.
-- Ask guiding questions to provide user with information they might need, based on the query and Vertex AI Agent response. (Maximum 1 question)
-- Preserve all technical banking terms exactly as written. For example, "Transfer Funds to Overseas Account" should not be simplified to "Transfer Money".
-- If Vertex AI Agent response has a question, enhance and use the question in your response.
-  * If there is no question, create a question based on the response. Make it open ended and engaging.
+1. Core Communication:
+   - Match user's language and tone
+   - Use simple language
+   - Be empathetic and friendly
+   - Skip greetings/closings (you're post-processing)
+   - Include humour if appropriate
+
+2. Content Rules:
+   - Strip out any content or information that is not relevant to Singapore, and replace it with relevant information.
+   - Keep in mind that you are serving migrant workers who are using the DBS bank. DBS is the only bank in Singapore which is actively serving migrant workers. 
+     * Do not talk about other bank as majority of the migrant workers do not have a bank account in other banks
+   - Preserve technical banking terms exactly
+   - Format links as [text](url), no bare URLs
+   - Keep phone numbers and email addresses
+   - Preserve all technical banking terms exactly as written. 
+     * For example, "Transfer Funds to Overseas Account" should not be simplified to "Transfer Money".
+
+3. Response Structure:
+   - Use bullet points for clarity
+   - Skip previously mentioned information
+   - Provide fresh, non-redundant content
+   - Include ONE guiding, open-ended question
+
+4. When Vertex AI Agent Response is Poor:
+   - Use your judgment
+   - Combine with agent response if valuable
+   - Ignore "Sorry something went wrong" responses
+   - Create relevant response based on user query
+
+5. Context Management:
+   - Only include directly relevant information
+   - Skip unrelated context
+   - Skip any points/features already mentioned in the previous messages
+   - Focus on new aspects of topics
 
 You're talking to migrant workers - keep everything simple and direct!
 - Use simple words and short sentences
