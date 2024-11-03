@@ -85,6 +85,18 @@ const DialogflowForm: React.FC = () => {
     }
   }, [messages]);
 
+  const onQuestionSelect = (question: string) => {
+    setInput(question);
+    if (textareaRef.current) {
+      textareaRef.current.value = question;
+      textareaRef.current.focus();
+      adjustTextareaHeight();
+
+      textareaRef.current.selectionStart = textareaRef.current.value.length;
+      textareaRef.current.selectionEnd = textareaRef.current.value.length;
+    }
+  };
+
   const clearInput = () => {
     setInput("");
     fileInputRef.current!.value = "";
@@ -150,7 +162,7 @@ const DialogflowForm: React.FC = () => {
 
       if (data.event === "interimTranscription") {
         // Update interim transcript
-        console.log("Interim:", data.transcript);
+        // console.log("Interim:", data.transcript);
       } else if (data.event === "finalTranscription") {
         // Append final transcript and clear interim
         // setFinalTranscript((prev) => prev + " " + data.transcript);
@@ -390,15 +402,7 @@ const DialogflowForm: React.FC = () => {
                 !hasMessages &&
                 !isPending && (
                   <BlurFade delay={0.25} inView>
-                    <TagList
-                      onQuestionSelect={(question) => {
-                        setInput(question);
-                        if (textareaRef.current) {
-                          textareaRef.current.value = question;
-                          adjustTextareaHeight();
-                        }
-                      }}
-                    />
+                    <TagList onQuestionSelect={onQuestionSelect} />
                   </BlurFade>
                 )}
             </div>
@@ -469,6 +473,7 @@ const DialogflowForm: React.FC = () => {
                         }
 
                         setFile(selectedFile);
+                        textareaRef.current?.focus();
                       }}
                       className="sr-only"
                       id="file-upload"
@@ -549,15 +554,7 @@ const DialogflowForm: React.FC = () => {
             !hasMessages &&
             !isPending && (
               <BlurFade delay={0.25} inView>
-                <TagList
-                  onQuestionSelect={(question) => {
-                    setInput(question);
-                    if (textareaRef.current) {
-                      textareaRef.current.value = question;
-                      adjustTextareaHeight();
-                    }
-                  }}
-                />
+                <TagList onQuestionSelect={onQuestionSelect} />
               </BlurFade>
             )}
         </div>
