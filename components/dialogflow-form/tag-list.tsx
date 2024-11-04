@@ -53,7 +53,6 @@ const tags = [
     color: "#9333EA",
     questions: [
       "Who to call in an emergency?",
-      "Where is the nearest money transfer service?",
       "What are my basic worker rights?",
       "How to contact MOM for help?",
     ],
