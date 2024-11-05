@@ -1,12 +1,6 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Wallet,
-  ShieldCheck,
-  CircleHelp,
-  Landmark,
-  LucideIcon,
-} from "lucide-react";
+import { Wallet, ShieldCheck, Landmark, LucideIcon } from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -45,16 +39,6 @@ const tags = [
       "How to update my information in the digibank app?",
       "How to apply for card replacement online? ",
       "How to log in digibank app if I forgot the password?",
-    ],
-  },
-  {
-    icon: CircleHelp,
-    label: "Quick Help",
-    color: "#9333EA",
-    questions: [
-      "Who to call in an emergency?",
-      "What are my basic worker rights?",
-      "How to contact MOM for help?",
     ],
   },
 ];
