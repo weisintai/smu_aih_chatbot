@@ -392,17 +392,23 @@ const DialogflowForm: React.FC = () => {
         )}
         <div className="max-w-3xl w-full mx-auto flex flex-col gap-4 bg-background h-full justify-between md:justify-center">
           {!hasMessages && !isPending && (
-            <div className="gap-1.5 flex flex-col my-auto md:my-0">
+            <div className="gap-1.5 flex flex-col my-auto md:my-0 items-center">
               <GradualSpacing
-                className="md:!text-4xl text-xl mb-4 md:mb-0 md:-tracking-widest tracking-[-.23em] font-bold "
+                className="md:!text-4xl text-xl md:-tracking-widest tracking-[-.23em] font-bold "
                 text={`${getTimeBasedGreeting()}! How can I help you today?`}
               />
+              <div className="md:flex text-center my-2">
+                <p className="text-muted-foreground text-sm">Support:&nbsp;</p>
+                <p className="text-muted-foreground text-sm">
+                  English • বাংলা • தமிழ் • Bahasa Indonesia • Tagalog • 中文
+                </p>
+              </div>
               {size &&
                 size.width !== null &&
                 size.width <= 768 &&
                 !hasMessages &&
                 !isPending && (
-                  <BlurFade delay={0.25} inView>
+                  <BlurFade delay={0.25} inView className="mt-4 md:mt-0">
                     <TagList onQuestionSelect={onQuestionSelect} />
                   </BlurFade>
                 )}
