@@ -99,8 +99,8 @@ Conversation Analysis Instructions:
       ],
       "rules": [
         "Translate the Current Query to English",
+        "If it's already in English, leave it as is",
         "Just give the translated query, don't give explaination of what the query means",
-        "If there are uncententies in words used, the context of the query should be literacy and financial literacy/scam related",
       ]
     }
     `;
@@ -130,10 +130,10 @@ Conversation Analysis Instructions:
     );
 
     return {
-      summary,
+      summary: summary ?? null,
       recentMessages: history,
-      keyTopics,
-      userPreferences,
+      keyTopics: keyTopics ?? null,
+      userPreferences: userPreferences ?? null,
       enhancedQuery,
     };
   } catch (error) {
@@ -369,9 +369,9 @@ Remember these pointers when crafting your response:
 - Preserve all technical banking terms exactly as written. For example, "Transfer Funds to Overseas Account" should not be simplified to "Transfer Money".
 - If Vertex AI Agent Response has a question, enhance and use the question in your response.
   * DO NOT force a question into the response if it is not essential to the User Query.
-- DO NOT repeat information pointers that is already shared to the user in Recent Messages.
 - DO NOT mention about Vertex AI Agent Response
   * Ignore 'Sorry something went wrong, can you repeat?' or similar responses from Vertex AI Agent
+  * If Vertex AI Agent Response is not answering the User Query, enhance the response to answer the User Query with your own judgement.
 
 - Ensure that the language of the response matches the language of the User Query.
   * ah long is a term used in Singapore to refer to loan sharks, don't treat it as english or typo.
