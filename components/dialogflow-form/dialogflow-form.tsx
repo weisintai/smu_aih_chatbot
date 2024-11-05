@@ -341,6 +341,7 @@ const DialogflowForm: React.FC = () => {
     setMessages([]);
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(SESSION_EXPIRY_KEY);
+    setIsStreaming(false);
 
     toast({
       title: "Conversation reset",
