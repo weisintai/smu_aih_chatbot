@@ -30,7 +30,13 @@ const generateEnhancedContext = async (
   history: ChatHistory[],
   generativeModel: GenerativeModel
 ): Promise<ConversationContext> => {
-  const contextPrompt = `
+  let contextPrompt;
+
+  if (history.length > 0) {
+    contextPrompt = `
+Conversation:
+${history.map((chat) => `${chat.role}: ${chat.message}`).join("\n")}
+
 Conversation Analysis Instructions:
 
 {
@@ -41,7 +47,7 @@ Conversation Analysis Instructions:
     "2. Main topics discussed",
     "3. User preferences/details (only from user messages)",
     "4. Exclude language/translation notes",
-    "5. Enhanced query construction"
+    "5. Enhanced query construction",
   ],
 
   "queryEnhancement": {
@@ -52,21 +58,15 @@ Conversation Analysis Instructions:
       }"
     ],
     "rules": [
-      "Keep 90% of original query intact",
-      "Only add context present in both sources",
       "Match original intent and tone",
-      "Write in first-person as user"
+      "Write in first-person as user",
+      "If Current Query is a not a question, do not change it to an open-ended question".
+      "If Current Query is a question, do not add statements or unrelated questions",
+      "ONLY enhance the Current Query, do not change the core message or intent",
+      "Translate the Current Query to English",
+      "Do NOT change the meaning of the original query",
     ],
-    "avoid": [
-      "Context only from history",
-      "Changing core request",
-      "Adding outside information",
-      "Modifying original meaning",
-      "Adding unrelated questions"
-    ]
-  },
-
-  "example": [
+      "example": [
       {
       "previousMessage": "You want a plan to pay back your $2000 loan? That's good!
         It's tricky with only $100 savings a month.
@@ -87,8 +87,24 @@ Conversation Analysis Instructions:
       "enhancedQuery": "I don't have a way to get the OCBC account number and the amount I want to send. What should I do?"
     }
   ]
+  },
 }
 `;
+  } else {
+    contextPrompt = `
+    "format": "Provide analysis in JSON with keys: enhancedQuery",
+    "queryEnhancement": {
+      "sources": [
+        "Current query: ${currentQuery}",
+      ],
+      "rules": [
+        "Translate the Current Query to English",
+        "Just give the translated query, don't give explaination of what the query means",
+        "If there are uncententies in words used, the context of the query should be literacy and financial literacy/scam related",
+      ]
+    }
+    `;
+  }
 
   try {
     const analysisResponse = await generativeModel.generateContent(
@@ -271,13 +287,13 @@ export async function POST(request: NextRequest) {
 
     let context: ConversationContext | null = null;
 
-    if (parsedHistory.length > 0) {
-      context = await generateEnhancedContext(
-        query,
-        parsedHistory,
-        generativeModel
-      );
-    }
+    context = await generateEnhancedContext(
+      query,
+      parsedHistory,
+      generativeModel
+    );
+
+    console.log(context);
 
     const request: protos.google.cloud.dialogflow.cx.v3.IDetectIntentRequest = {
       session: sessionPath,
@@ -304,18 +320,19 @@ ${
     ? `**Conversation Context:**
 ${context.summary}
 
-**Key Topics:** ${context.keyTopics.join(", ")}
+**Key Topics:** ${context.keyTopics?.join(", ")}
 
 **Recent Messages:**
 ${formatRecentHistory(context.recentMessages)}
-
 `
     : ""
 }
 
-**User Query**: "${query}"
+{
+  **User Query**: "${query}",
 **Vertex AI Agent Response**:
 "${assistantMessage || ""}"
+}
 
 ${
   !!context
@@ -332,42 +349,35 @@ ${
 With reference from the response from Vertex AI Agent and the chat history, answer the user query
 Response Guidelines:
 
-1. Core Communication:
-  - Match user's language and tone
-  - Use simple language
-  - Be empathetic and friendly
-  - Skip greetings/closings (you're post-processing)
-  - Include humour if appropriate
-  - Avoid asking for personal information
+(if the response from Vertex AI Agent is too bad, make your own judgement, and combine it with the response from Vertex AI Agent if it makes sense).
+Remember these pointers when crafting your response:
+- empathetic reflections of user concerns, followed by clear, fact-supported responses
+- friendly and informal communication style
+- match the personality and tone to the user's query
+- include humor where appropriate
+- avoid jargon and technical terms
+- you're just a postprocessing step, so don't worry about greeting, closing, or other formalities, 
+- if agent response contains phone numbers or email addresses, please keep them
+- for website links, no bare URLs
+  * Use format: [link text](https://example.com)
+  * Only include URLs if Vertex AI Agent Response contains them
+- Ensure that your responses are short and concised, use pointers if possible. 
+- Keep in mind that you are serving migrant workers who are using the DBS bank. DBS is the only bank in Singapore which is actively serving migrant workers. Do not talk about other bank as majority of the migrant workers do not have a bank account in other banks. 
+- Strip out any content or information that is not relevant to Singapore, and replace it with relevant information.
+  * you are serving Singapore migrant workers, so the information should be relevant to them and Singapore.
+- Don't include information from the context that's not remotely related to the User Query or the agent response.
+- Preserve all technical banking terms exactly as written. For example, "Transfer Funds to Overseas Account" should not be simplified to "Transfer Money".
+- If Vertex AI Agent Response has a question, enhance and use the question in your response.
+  * DO NOT force a question into the response if it is not essential to the User Query.
+- DO NOT repeat information pointers that is already shared to the user in Recent Messages.
+- DO NOT mention about Vertex AI Agent Response
+  * Ignore 'Sorry something went wrong, can you repeat?' or similar responses from Vertex AI Agent
 
-2. Content Rules:
-  - Strip out any content or information that is not relevant to Singapore, and replace it with relevant information.
-  - Keep in mind that you are serving migrant workers who are using the DBS bank. DBS is the only bank in Singapore which is actively serving migrant workers. 
-    * Do not talk about other bank as majority of the migrant workers do not have a bank account in other banks
-  - Preserve technical banking terms exactly
-  - Format links as [text](url), no bare URLs
-  - Keep phone numbers and email addresses as it is, don't omit them
-  - Preserve all technical banking terms exactly as written. 
-    * For example, "Transfer Funds to Overseas Account" should not be simplified to "Transfer Money".
-
-3. Response Structure:
-  - Use bullet points for clarity
-  - Skip previously mentioned information
-  - Provide fresh, non-redundant content
-
-4. When using the Vertex AI Agent Response:
-  - Follow the Vertex AI Agent Response as a guide, don't deviate too much
-    - You can have your judgement if the response is not relevant to the user query
-  - Ignore "Sorry something went wrong" responses
-  - Create relevant response based on user query
-
-5. Context Management:
-  - Only include directly relevant information
-  - Skip unrelated context
-  - Skip any points/features already mentioned in the previous messages
-    * Don't repeat the same information that's already been shared from past assistant messages
-  - Avoid repeating the user query in the response
-  - Focus on new aspects of topics
+- Ensure that the language of the response matches the language of the User Query.
+  * ah long is a term used in Singapore to refer to loan sharks, don't treat it as english or typo.
+  * strictly follow the CURRENT **User Query** language.
+    - for example: do not mix English and Chinese in the response.
+    - if Vertex AI Agent Response is in English, translate to the language of the CURRENT User Query.
 
 You're talking to migrant workers - keep everything simple and direct!
 - Use simple words and short sentences
@@ -380,9 +390,6 @@ You're talking to migrant workers - keep everything simple and direct!
 - Use bullet points for lists
 - Include spaces between ideas
 - Explain any necessary complex terms
-
-Avoid mentioning of Vertex AI, act like you're answering the user query directly.
-Remember you are talking to migrant workers. Try and include more information that is relevant to them.
 `;
 
     // console.log(`Approximately ${geminiPrompt.length / 4} tokens`);
