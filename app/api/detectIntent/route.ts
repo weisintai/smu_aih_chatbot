@@ -47,12 +47,12 @@ Conversation Analysis Instructions:
     "2. Main topics discussed",
     "3. User preferences/details (only from user messages)",
     "4. Exclude language/translation notes",
-    "5. Enhanced query construction",
+    "5. Enhanced query construction, not overwrite the original query",
   ],
 
   "queryEnhancement": {
     "sources": [
-      "Current query: ${currentQuery}",
+      "Current query: '${currentQuery}'",
       "Previous assistant message: ${
         history.filter((h) => h.role === "assistant").at(-1)?.message
       }"
@@ -65,6 +65,7 @@ Conversation Analysis Instructions:
       "ONLY enhance the Current Query, do not change the core message or intent",
       "Translate the Current Query to English",
       "Do NOT change the meaning of the original query",
+      "Do NOT intepret the query and change it completely, ONLY enhance it, keep the original query intact",
     ],
       "example": [
       {
@@ -85,6 +86,11 @@ Conversation Analysis Instructions:
         Do you have a way to get the OCBC account number and the amount you want to send?",
       "currentQuery": "not really",
       "enhancedQuery": "I don't have a way to get the OCBC account number and the amount I want to send. What should I do?"
+    },
+    {
+      "previousMessage": "你可以用DBS digibank app转钱。你要转本地钱还是海外钱?",
+      "currentQuery": "中国",
+      "enhancedQuery": "I want to transfer money to China."
     }
   ]
   },
@@ -293,7 +299,7 @@ export async function POST(request: NextRequest) {
       generativeModel
     );
 
-    console.log(context);
+    // console.log(context);
 
     const request: protos.google.cloud.dialogflow.cx.v3.IDetectIntentRequest = {
       session: sessionPath,
@@ -369,12 +375,14 @@ Remember these pointers when crafting your response:
   * DO NOT force a question into the response if it is not essential to the User Query.
 - DO NOT mention about Vertex AI Agent Response
   * Ignore 'Sorry something went wrong, can you repeat?' or similar responses from Vertex AI Agent
+- DO NOT include User Query in the response.
 
 - Ensure that the language of the response matches the language of the User Query.
   * ah long is a term used in Singapore to refer to loan sharks, don't treat it as english or typo.
-  * strictly follow the CURRENT **User Query** language.
+  * Strictly follow the CURRENT **User Query** language.
     - for example: do not mix English and Chinese in the response.
-    - if Vertex AI Agent Response is in English, translate to the language of the CURRENT User Query.
+    - if Vertex AI Agent Response is in English but User Query is not in English, translate to the language of the CURRENT User Query.
+    - if Vertex AI Agent Response is in English and User Query is in English, keep the response in English.
 
 You're talking to migrant workers - keep everything simple and direct!
 - Use simple words and short sentences
@@ -388,6 +396,8 @@ You're talking to migrant workers - keep everything simple and direct!
 - Include spaces between ideas
 - Explain any necessary complex terms
 - Avoid 'I can't give financial advice' or similar responses, reconstruct the response to provide the information the user needs.
+- If Vertex AI Agent Response is asking for clarifying information, don't change it to a statement.
+- Avoid stripping away too much information since you're providing how-tos too.
 `;
 
     // console.log(`Approximately ${geminiPrompt.length / 4} tokens`);
