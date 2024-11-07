@@ -255,6 +255,8 @@ export async function POST(request: NextRequest) {
       generativeModel
     );
 
+    query = context.enhancedQuery || query;
+
     let fileAnalysisResult = null;
     let base64File = null;
     let fileType = null;
@@ -308,9 +310,7 @@ export async function POST(request: NextRequest) {
         )}'"
 * **Labels:** "The image is labeled as ${fileAnalysisResult.labels.join(", ")}."
 
-**Based on this information, please answer the query: ${
-          context.enhancedQuery
-        }**`;
+**Based on this information, please answer the query: ${query}**`;
       } else if (fileType.mime === "application/pdf") {
         // Handle PDF file (you might want to use a different method or API for PDFs)
 
@@ -333,9 +333,7 @@ export async function POST(request: NextRequest) {
             " "
           )}'"
 
-**Based on this information, please answer the query: ${
-            context.enhancedQuery
-          }**`;
+**Based on this information, please answer the query: ${query}**`;
         }
       }
     }
@@ -346,7 +344,7 @@ export async function POST(request: NextRequest) {
       session: sessionPath,
       queryInput: {
         text: {
-          text: context?.enhancedQuery || query,
+          text: query,
         },
 
         languageCode: LANGUAGE_CODE,
