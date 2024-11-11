@@ -26,6 +26,7 @@ import TagList from "./tag-list";
 import { useWindowSize } from "@uidotdev/usehooks";
 import { Message } from "./types";
 import BlurFade from "@/components/ui/blur-fade";
+import Balancer from "react-wrap-balancer";
 
 const STORAGE_KEY = "dialogflow_messages";
 const SESSION_EXPIRY_KEY = "dialogflow_session_expiry";
@@ -400,7 +401,14 @@ const DialogflowForm: React.FC = () => {
               <div className="md:flex text-center my-2">
                 <p className="text-muted-foreground text-sm">Support:&nbsp;</p>
                 <p className="text-muted-foreground text-sm">
-                  English • বাংলা • தமிழ் • Bahasa Indonesia • Tagalog • 中文
+                  {size && size.width !== null && size.width <= 768 ? (
+                    <Balancer>
+                      English • বাংলা • தமிழ் • Bahasa Indonesia • Tagalog •
+                      中文
+                    </Balancer>
+                  ) : (
+                    "English • বাংলা • தமிழ் • Bahasa Indonesia • Tagalog • 中文"
+                  )}
                 </p>
               </div>
               {size &&
