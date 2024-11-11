@@ -477,7 +477,7 @@ You are a post-processing agent. With reference to the **User Query** and the **
     }
 
     const nextResponse = NextResponse.json({
-      vertexAgentResponse: assistantMessage,
+      // vertexAgentResponse: assistantMessage,
       geminiResponse: geminiResponse.candidates?.[0]?.content?.parts?.[0]?.text,
     });
 
