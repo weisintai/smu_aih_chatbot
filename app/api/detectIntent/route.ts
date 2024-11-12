@@ -215,12 +215,12 @@ export async function POST(request: NextRequest) {
   const body = Object.fromEntries(formData);
 
   const { file } = body as unknown as RequestData;
-  let { query } = body as unknown as RequestData;
+  const { query: originalQuery } = body as unknown as RequestData;
   const { history } = body as unknown as RequestData;
 
   const parsedHistory: ChatHistory[] = JSON.parse(history);
 
-  if (!query && !file) {
+  if (!originalQuery && !file) {
     return NextResponse.json({ error: "Query is required" }, { status: 400 });
   }
 
@@ -250,12 +250,12 @@ export async function POST(request: NextRequest) {
     let context: ConversationContext | null = null;
 
     context = await generateEnhancedContext(
-      query,
+      originalQuery,
       parsedHistory,
       generativeModel
     );
 
-    query = context.enhancedQuery || query;
+    let query = context.enhancedQuery || originalQuery;
 
     let fileAnalysisResult = null;
     let base64File = null;
@@ -374,7 +374,7 @@ ${formatRecentHistory(context.recentMessages)}
 }
 
 **User Query:**
-"${query}"
+"${originalQuery}"
 
 **Assistant Response:**
 "${assistantMessage || "NO ASSISTANT RESPONSE"}"
